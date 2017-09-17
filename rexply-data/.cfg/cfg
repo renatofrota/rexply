@@ -1,8 +1,0 @@
-#!/bin/bash
-# you can change settings directly on main reXply script, but those changes would be lost when updating!
-# copy from the rexply script file to here the variables you want to override and keep after the updates
-# example: have you customized your terminal keybindings and use ctrl+v to paste (instead ctrl+shift+v)?
-# just uncomment the line below:
-
-# pasteterminal="xdotool key ctrl+v"
-
