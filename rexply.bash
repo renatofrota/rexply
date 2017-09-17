@@ -187,9 +187,9 @@ yadform() {
 	else
 		for dfields in "${dmfieldlist[@]}"; do
 			if [[ "$statusb" == "1" ]]; then
-				value=$( { echo -e "\n\n" ; for i in ${dmfieldlist[@]}; do [[ "$dfields" == $i ]] && echo -en ">>>"; echo "$i: ${dmenufields[$i]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l 30 $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply - $dfields:" )
+				value=$( { echo -e "\n\n" ; for i in ${dmfieldlist[@]}; do [[ "$dfields" == $i ]] && echo -en ">>>"; echo "$i: ${dmenufields[$i]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $dmenusz $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply - $dfields:" )
 			else
-				value=$( echo -e "${dmenufields[$dfields]}\n\n" | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l 30 $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply - $dfields:" )
+				value=$( echo -e "${dmenufields[$dfields]}\n\n" | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $dmenusz $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply - $dfields:" )
 			fi
 			[[ ! -z "$value" ]] && dmenufields[$dfields]=$value && export ${dfields}=$value || log "Error: aborted" || exit $?
 		done
@@ -203,7 +203,7 @@ yerror() {
 	if [[ "$suplite" != "1" ]]; then
 		yad --image "dialog-error" --width="180" --title="reXply failed" --text="Error: $@"
 	else
-		echo -e "\n\n\n\nError: $@\n\n\n\n" | dmenu -b -nf white -nb red -sf white -sb red -l 30 -p "reXply"
+		echo -e "\n\n\n\nError: $@\n\n\n\n" | dmenu -b -nf white -nb red -sf white -sb red -l $dmenusz -p "reXply"
 	fi
 	backwindow
 	return $yexit
@@ -215,7 +215,7 @@ yask() {
 	else
 		answer=""
 		while [[ "$answer" != "(Y)es" ]] && [[ "$answer" != "(N)o" ]]; do
-			answer=$(echo -e "$1\n\n\n(Y)es\n(N)o\n\n\n" | dmenu -b -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l 30 -i -p "reXply")
+			answer=$(echo -e "$1\n\n\n(Y)es\n(N)o\n\n\n" | dmenu -b -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $dmenusz -i -p "reXply")
 		done
 		[[ $answer =~ (y|Y) ]] && return 0 || return 1
 	fi
@@ -343,7 +343,7 @@ selectfile() {
 		else
 			# to do: find a way to dynamically insert "-l 30" parameter instead duplicating dmenu command
 			if [[ "$vertlis" != "0" ]]; then
-				name=$( for i in ${options[@]}; do echo -e "$i"; done | dmenu $( [[ "$bottoms" != "0" ]] && echo "-b" ) -i -l 30 -p "reXply" )
+				name=$( for i in ${options[@]}; do echo -e "$i"; done | dmenu $( [[ "$bottoms" != "0" ]] && echo "-b" ) -i -l $dmenusz -p "reXply" )
 			else
 				name=$( for i in ${options[@]}; do echo -e "$i"; done | dmenu $( [[ "$bottoms" != "0" ]] && echo "-b" ) -i -p "reXply" )
 			fi
