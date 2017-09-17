@@ -1,0 +1,15 @@
+---
+text:customer
+---
+Hello ${customer},
+
+Thank you for contacting our Help Desk. 
+
+In order to be able to assist you with the case we are going to need a bit more information. 
+
+Please provide us with detailed step-by-step instructions how to recreate the issue on our end, so we can investigate it. 
+
+Make sure to include any administrator login details of your application. 
+
+Looking forward for your reply.
+

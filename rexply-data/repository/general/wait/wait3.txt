@@ -1,0 +1,9 @@
+---
+text:customer:-
+---
+Hello ${customer},
+
+We are currently working on your request.
+
+In the meantime your patience is greatly appreciated.
+

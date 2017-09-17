@@ -1,0 +1,11 @@
+---
+text:customer
+---
+Hello ${customer},
+
+Thank you for contacting our Help Desk. 
+
+In order to assist you further, please provide us with [b]detailed[/b] step by step instructions (open this page, click here, select that option etc.) on how to recreate the issue on our end. Also include the login details to your website and its admin URL if needed in the recreation process. 
+
+Looking forward to your reply.
+

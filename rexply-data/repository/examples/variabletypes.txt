@@ -1,0 +1,15 @@
+---
+text:customer
+txt:code
+num:minutes:10!0..20
+---
+Hello ${customer},
+
+Thanks for getting in touch with us.
+
+To resolve this problem I've added this code to .htaccess:
+
+[code]${code}[/code]
+
+This change should reflect in aproximately ${minutes} minutes.
+

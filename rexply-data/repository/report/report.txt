@@ -1,0 +1,21 @@
+---
+txt:repetitive:-
+txt:mightreoccur:-
+txt:suggestions:-
+txt:other:-
+---
+1. Repetitive or reoccurring issues:
+
+${repetitive}
+
+2. Cases that I believe might reoccur for other clients services:
+
+${mightreoccur}
+
+3. Suggestions:
+
+${suggestions}
+
+4. Other:
+
+${other}
