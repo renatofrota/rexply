@@ -140,7 +140,7 @@ We will avoid updating the additional config file but take your own backups, ple
 
 ## More info regarding the dependencies
 
-1. `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visuals, change both `$lighter` and `$suplite` variables to `0` so you can use `yad` instead for all functions that would use `dmenu` (leaving `$lighter` enabled and `$suplite` disabled, `yad` will be used when processing files with "bashdown frontmatter templates".
+1. `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visuals, change both `$lighter` and `$suplite` variables to `0` so you can use `yad` instead for all functions that would use `dmenu` (leaving `$lighter` enabled and `$suplite` disabled, `yad` will be used only to process files with "bashdown frontmatter templates").
 2. `xclip` may be substituted with `xsel` with quick edits to the script, but xclip is also widespread and demonstrated to be more reliable on my tests. The script is somewhat "ready" to use `pbcopy` instead on OSX - I just had no time to test in OSX yet, so it may need some polishing.
 3. `xdotool` is used to handle the copy of processed data to clipboard and pasting the data to the destination app. You can disable automatic pasting, or use "echo" as paste command and pipe this script output to `pbpaste`, etc and you can skip the dependency on `xdotool`.
 
