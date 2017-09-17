@@ -128,7 +128,7 @@ reXply will, by default:
 All these restrictions are due to security concerns and can be modified by either:
 
 - modifying the rexply file directly (**$HOME/rexply/rexply.bash**); or
-- modifying the additional config file (**$HOME/rexply/rexply-data/.cfg/cfg**)
+- modifying the additional config file (**$HOME/rexply/rexply.cfg**)
 
 We will avoid updating the additional config file but take your own backups, please.
 
