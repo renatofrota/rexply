@@ -97,7 +97,7 @@ logfile="$rexplydir/rexply-data/.log/log"
 tmpfile="$rexplydir/rexply-data/.tmp/tmp"
 replies="$rexplydir/rexply-data/repository"
 
-configfile="$rexplydir/rexply-data/.cfg/cfg"
+configfile="$rexplydir/rexply.cfg"
 [[ -f "$configfile" ]] && source $configfile
 
 # @link http://github.com/coderofsalvation/bashdown
