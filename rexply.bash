@@ -99,7 +99,7 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 
 
 # INTERNAL SETUP
-# set -x
+set -x
 run=$(basename ${BASH_SOURCE[0]});
 realpath="${BASH_SOURCE[0]}";
 while [[ -h "$realpath" ]]; do
@@ -153,7 +153,7 @@ log() {
 }
 
 yform() {
-	yad --form --title="reXply" --width="580" --borders="20" --undecorated --on-top --center --skip-taskbar --image='accessories-text-editor' --quoted-output --separator="|" --button="gtk-ok" $@ 2>>$logfile
+	yad --form --title="reXply" --width="580" --borders="20" --undecorated --on-top --center --skip-taskbar --image='accessories-text-editor' --separator="|" --quoted-output --button="gtk-ok" $@ 2>>$logfile
 }
 
 yadform() {
@@ -170,7 +170,7 @@ yadform() {
 				ydata2=$(echo $ydata | cut -d : -f 2-)
 				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|0) ]] && lighter="1"
 				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|1) ]] && lighter="0"
-				[[ "$ytype" != "preview" ]] && { [[ "$lighter" != "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1") ; }
+				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && { [[ "$lighter" != "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1") ; }
 				if [[ "$lighter" != "1" ]]; then
 					case $ytype in
 						preview|editor)
@@ -542,6 +542,9 @@ vchanges() {
 	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
 
 	https://github.com/renatofrota/rexply
+
+	v0.0.4 - 2017-09-18
+		[*] fixed a problem with 'editor' not taking effect or affecting other fields under some circumstances
 
 	v0.0.3 - 2017-09-18
 		[+] added 'editor' front-matter variable

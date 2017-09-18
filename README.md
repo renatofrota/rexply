@@ -132,14 +132,12 @@ this line is not exactly a comment but will be ignored: 'this' is not a valid va
 #### Front-matter tips:
 
 - you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
-- the preview lines (those displayed below `dmenu` when both `$lighter='1'` and `$preview='1'` are set, while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of these methods:
-  1. _"it's simple, I will disable preview in config"_ - you may think at first. Yes, it works, but there are smarter ways to "fix" it without breaking:
-  2. disable preview specifically for that template, by adding `preview:false` to it's front-matter;
-  3. change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top__);
-  4. use less-common words as variable names;
-  5. prepend them with a _prefix__ (e.g.: `field:field_customer:Customer`) making the variable names still _readable_ but much less likely (near impossible) to match your input data;
-  6. change the variable name case (if lowercase, make it uppercase, and vice-versa);
-  7. change the order of them in the front-matter of template file (place variables that expects a _shorter **input** at the top__).
+- the preview lines (those displayed below `dmenu` when both `$lighter='1'` and `$preview='1'` are set, while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
+  1. disable preview specifically for that template, by adding `preview:false` to it's front-matter;
+  2. use less-common words as variable names (or just combine words like `customer_name`);
+  3. change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
+  4. prepend all them with a _prefix__ (e.g.: `field:field_customer:Customer`), making the variable names still _readable_ but much less likely (near impossible) to match your input data;
+  5. make the variable name all uppercase;
 
 ### Bash scripts
 
