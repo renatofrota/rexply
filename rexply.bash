@@ -43,7 +43,7 @@ yfolder=('green' 'white') # yad foreground and background colors used for the su
 yfnames=('blue' 'white') # yad foreground and background colors used for all the filename entries.
 
 belight='1' # use dmenu (a simpler and lightweight selector) on file/directories selection dialogs
-lighter='1' # use dmenu to process all dialogs (including front-matter forms): kill yad dependency 
+lighter='1' # use dmenu to process all dialogs (including front-matter forms): kill yad dependency
 bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
 vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
 preview='1' # display a "live preview" of front-matter bashdown variables bellow dmenu input field
@@ -77,7 +77,7 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 # 'xdotool click 2' # is often used in combination with terminal windows - to paste from X primary
 # 'xdotool key ctrl+v' # primarily used in combination with regular windows - paste from clipboard
 # 'xdotool key ctrl+shift+v' # recommended(*) alternative to paste on terminal if using clipboard!
-# 'eval cat $tmpfile' 
+# 'eval cat $tmpfile' # use to "paste" in OSX (pipe to pbcopy: rexply | pbcopy) and paste manually
 
 # (*) IMPORTANT
 # paste from primary with 'xdotool click 2' will paste to window under your MOUSE CURRENT POSITION
@@ -153,13 +153,14 @@ log() {
 }
 
 yform() {
-	yad --form --title="reXply" --width="580" --borders="20" --undecorated --on-top --center --skip-taskbar --image='accessories-text-editor' --quoted-output --separator="|" $@ 2>>$logfile
+	yad --form --title="reXply" --width="580" --borders="20" --undecorated --on-top --center --skip-taskbar --image='accessories-text-editor' --quoted-output --separator="|" --button="gtk-ok" $@ 2>>$logfile
 }
 
 yadform() {
 	IFS=$'\n'
-	[[ "$lighter" != "1" ]] && yadfields=() || dmenufields=()
-	types=('preview' 'num' 'numeric' 'txt' 'textarea' 'entry' 'text')
+	yadfields=()
+	dmenufields=()
+	types=('preview' 'editor' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text')
 	for fmfield in $@; do
 		ytype=$(echo $fmfield | cut -d : -f 1 | tr '[:upper:]' '[:lower:]')
 		for type in "${types[@]}"; do
@@ -167,12 +168,14 @@ yadform() {
 				ydata=$(echo $fmfield | cut -d : -f 2-)
 				ydata1=$(echo $ydata | cut -d : -f 1)
 				ydata2=$(echo $ydata | cut -d : -f 2-)
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|0) ]] && lighter="1"
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|1) ]] && lighter="0"
 				[[ "$ytype" != "preview" ]] && { [[ "$lighter" != "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1") ; }
 				if [[ "$lighter" != "1" ]]; then
 					case $ytype in
-						preview)
+						preview|editor)
 							;;
-						num*)
+						num|numeric)
 							yadfields+=("--field=$ydata1:NUM")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
@@ -182,24 +185,30 @@ yadform() {
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
 							;;
-						entry|text|*)
+						field|var|entry|text)
 							yadfields+=("--field=$ydata1")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							;;
+						*)
 							;;
 					esac
 				else
 					declare -A dmenufields
 					case $ytype in
+						editor)
+							;;
 						preview)
 							[[ "$ydata1" =~ (true|on|yes|enable|enabled|1) ]] && preview="1"
 							[[ "$ydata1" =~ (false|off|no|disable|disabled|0) ]] && preview="0"
 							;;
-						num*)
+						num|numeric)
 							dmenufields[$ydata1]="$(echo "$ydata2" | cut -d '!' -f 1 | cut -d '#' -f 1)"
 							;;
-						*)
+						field|var|entry|text|txt|textarea)
 							dmenufields[$ydata1]="$(echo "$ydata2" | cut -d '#' -f 1)"
+							;;
+						*)
 							;;
 					esac
 				fi
@@ -379,8 +388,8 @@ selectfile() {
 		done
 		if [[ "$belight" != "1" ]]; then
 			height=$(awk -v items=${#options[@]} -v ih=$peritem -v mh=$minimum 'BEGIN{printf "%d", ((items/3)*ih)+mh}')
-			[[ "$timeout" -gt "0" ]] && ytimeout="--timeout=$timeout" || ytimeout=""
-			name=$(yad --list --title="reXply" --text="Select the folder/file" --column="Files" --column="@fore@" --column="@back@" --no-headers --width="300" --height="$height" $ytimeout --search-column="1" --regex-search ${options[@]} 2>/dev/null)
+			[[ "$timeout" -gt "0" ]] && height=$((height+10))
+			name=$(yad --list --title="reXply" --text="Select the folder/file" --column="Files" --column="@fore@" --column="@back@" --no-headers --width="300" --height="$height" --timeout="$timeout" --timeout-indicator="top" --search-column="1" --regex-search ${options[@]} 2>/dev/null)
 		else
 			name=$( for dirorfile in ${options[@]}; do echo -e "$dirorfile"; done | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb $( [[ "$bottoms" != "0" ]] && echo "-b" ) -l $vertlis -i -p "reXply" )
 		fi
@@ -525,7 +534,7 @@ showhelp() {
 }
 
 vversion() {
-	echo "reXply v0.0.2 - https://github.com/renatofrota/rexply"
+	echo "reXply v0.0.3 - https://github.com/renatofrota/rexply"
 }
 
 vchanges() {
@@ -533,6 +542,12 @@ vchanges() {
 	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
 
 	https://github.com/renatofrota/rexply
+
+	v0.0.3 - 2017-09-18
+		[+] added 'editor' front-matter variable
+		[*] renamed some front-matter variables for clarity
+		[*] removed 'Cancel' button from yad form (front-matter inputs) to prevent unintentional closure (use Esc key)
+		[*] minor bugfixes
 
 	v0.0.2 - 2017-09-18
 		[+] isolated 'cbackup' 'copytoc' 'pasteit' 'restore' as individual settings/steps

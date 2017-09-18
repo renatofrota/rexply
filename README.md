@@ -30,7 +30,7 @@ echo "reXply installed to $(echo $PATH|cut -d: -f1)/rexply"
 
 ## More advanced operation
 
-The default replies/scripts repository is **$HOME/rexply/rexply-data/repository**. Just create more folders/files there.
+The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`. Just create more folders/files there.
 
 The files can be:
 
@@ -45,31 +45,25 @@ No secrets on this. I just recommend you append .txt to the file names so your e
 
 ### Bashdown files
 
-You can add bash commands within **$()** on your file. These will be executed by bash and replaced dynamically within the template.
+You can add bash commands within `$()` on your file. These will be executed by bash (**with your homedir as initial working directory**) and their output will replace the command dynamically in the template.
 
-Environment variables like $USER, $PWD, etc are also replaced - even when outside $().
+Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_.
 
 ### Bashdown files with front-matter headers
 
-Create a section at the top of the file, with one or more variables. Each variable can have.
-
-- the variable type
-- the variable name
-- the variable default data (optional)
-
-Then, re-use the variables within the file:
+Create a section with some variables at the top of the file (surround the variables by `---` above and below) and use them within template text. Example:
 
 ```
 ---
-text:customer
+field:customer:Customer
 txt:code
-num:minutes:10!0..20
+num:minutes:10!0..20!5
 ---
 Hello ${customer},
 
 Thanks for getting in touch with us.
 
-To resolve this problem I've added this code to .htaccess:
+To resolve this problem I've added this code to [b]public_html/.htaccess[/b] file on your account:
 
 [code]${code}[/code]
 
@@ -80,38 +74,56 @@ This change should reflect in aproximately ${minutes} minutes.
 
 When inserting this template, reXply will ask you to provide the data to the 3 variables:
 
-- the customer username (pre-filled as "Customer")
-- the code _you've used to resolve the problem_ (as stated in this template)
-- in how many minutes before the changes should reflect (a field pre-filled with "10" and freely editable - if using dmenu - or with nice +/- buttons and limited to 0-20 - if using yad)
+- your customer's name
+- the _code_ you've used to resolve his problem
+- how many minutes it will take to reflect on his end
+
+After the variable name, you can add `:` and the default input for that variable.
+
+If using `dmenu`, you will see an empty field with a 'selection' below (the default input). You can type any value or just hit enter to use the pre-selected option. One field at a time. Optionally, a preview of all the fields can be displayed underneath the selector (`$preview='1'`).
+
+If using `yad`, a form will be displayed, with all fields visible and editable simultaneously. Each field is pre-filled with the default value data (or the variable name, if you have set no default value). Numeric fields will have +/- buttons - and may be limited to the range you have defined. In the example above `!0..20!5` means _"a value between 0 to 20, in steps of 5"_. The "steps" are only for the +/- buttons (or up/down arrows): any value within the allowed range can be _manually_ entered.
 
 #### Variable types and syntax
 
 The currently accepted front-matter variable types and syntax are the following (this list will grow):
 
-1. text or entry (single line input)
-   - `text:customer` (the default value will be `customer`, i.e.: the variable name)
-   - `text:customer:` (defaults to a literal `${varname}`, i.e.: the placeholder vars stays on template)
-   - `text:customer:-`
-   - `text:customer:Customer` 
-   - `text:customer:John`
-2. txt or textarea (multiline input)
+1. `field`, `var`, `text` or `entry`: regular text input field
+   - `field:customer` (the default value will be `customer`, i.e.: the variable name)
+   - `field:customer:` (defaults to a literal `${varname}`, i.e.: the placeholder vars stays on template)
+   - `field:customer:-`
+   - `field:customer:Customer` 
+   - `field:customer:John`
+2. `txt` or `textarea`: multiline (textarea) input field
    - `txt:instructions`
    - `txt:instructions:`
    - `txt:instructions:Access URL X and click button Y`
-3. num (default numeric value [with a defined range of accepted values])
+3. `num` or `numeric`: field that _defaults_ to a numeric value [with a defined range of accepted values]
    - `num:minutes`
    - `num:minutes:`
    - `num:minutes:10`
    - `num:minutes:10!0..20`
-4. preview (used just to control if previewing of all front-matter variables in dmenu is enabled)
+4. `preview`: override `$preview` setting for a particular template file
    - `preview:true` (or aliases: on, yes, enable(d), 1)
    - `preview:false` (or aliases: off, no, disable(d), 0)
+5. `editor`: override `$lighter` setting for a particular template file
+   - `editor:true` (or aliases: yad, full, gui, visual, on, enable(d), 1)
+   - `editor:false` (or aliases: dmenu, light, cli, text, off, disable(d), 0)
+
+#### Specifics of each _form-filling_ utility
+
+- dmenu:
+  1. It does not allow you paste data.
+  2. Enter submit data. To add line breaks, type `\\n`.
+- yad:
+  1. It allows you paste data on it's fields. However, you cannot use `|` in provided data (it will break the field<->data association: any data after a `|` will be associated to the next field (and all the next are also pushed 1 field down).
+  2. You may find it hard to tabulate textarea fields. Use Ctrl+tab.
 
 #### Comments within front-matter header
 
 ```
 ---
-text:var_name:default value#this is comment (variable is processed)
+field:var_name:default value#this is comment (variable is processed)
 #numthis line is also a comment
 this line is not exactly a comment but will be ignored: 'this' is not a valid variable type
 ---
@@ -120,43 +132,46 @@ this line is not exactly a comment but will be ignored: 'this' is not a valid va
 #### Front-matter tips:
 
 - you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
-- the preview lines (those displayed below dmenu when `$preview='1'` is set, while processing a file with front-matter variables) are "filtered" as you type and will eventually disappear: once the input text do not match any of them! If it is a problem (you often ends up selecting an existing item) you can:
-  1. disable preview in config (obviously);
-  2. use less-common words as variable names;
-  3. prepend them with a _prefix__ (e.g.: `field_customer`) making the variable names still _readable_ but much less likely (near impossible) to match your input data;
-  4. add a field `preview:false` to disable field preview for a particular file. The same way you can add a field 'preview:true' to enable preview for a particular file if/when globally disabled in reXply config.
+- the preview lines (those displayed below `dmenu` when both `$lighter='1'` and `$preview='1'` are set, while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of these methods:
+  1. _"it's simple, I will disable preview in config"_ - you may think at first. Yes, it works, but there are smarter ways to "fix" it without breaking:
+  2. disable preview specifically for that template, by adding `preview:false` to it's front-matter;
+  3. change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top__);
+  4. use less-common words as variable names;
+  5. prepend them with a _prefix__ (e.g.: `field:field_customer:Customer`) making the variable names still _readable_ but much less likely (near impossible) to match your input data;
+  6. change the variable name case (if lowercase, make it uppercase, and vice-versa);
+  7. change the order of them in the front-matter of template file (place variables that expects a _shorter **input** at the top__).
 
 ### Bash scripts
 
-They are **executed** when selected in the menu (be careful!)
+They are **executed** (from your homedir as initial working directory) when selected in the menu (**be careful!**)
 
 For these, I recommend you:
 
-- use .sh or .bash extension
-- add **#!/bin/bash** hashbang at the top
-- make them executable with **chmod +x path/to/filename.bash**
+- add `#!/bin/bash` hashbang at the top
+- use .sh or .bash extension (so your text editors also know they are shell executable files)
+- make them executable with `chmod +x path/to/filename.bash` (it's actually mandatory, or they will be parsed as a regular text template)
 
 ## More information
 
 reXply will, by default:
 
-- [x] disallow browsing to parent directories outside it's default repository
-- [x] hide directories and files preceded by a dot (.filename)
-- [x] hide form list any file bigger than a pre-defined size limit (default: 3MB)
-- [x] prevent execution of any arbitrary executably, by executing them as "bash $filename"
+- [x] hide directories and files preceded by a dot (e..g: `.filename`) - `$showall='0'`
+- [x] disallow browsing to parent directories outside it's default repository - `$breakit='0'`
+- [x] hide form list any file bigger than a pre-defined size limit (default: 3MB) - `$maxsize='3'`
+- [x] prevent execution of arbitrary executables (call executables using `bash $filename`) - `$bashit='1'`
 
 All these restrictions are due to security concerns and can be modified by either:
 
-- modifying the rexply file directly (**$HOME/rexply/rexply.bash**); or
-- modifying the additional config file (**$HOME/rexply/rexply.cfg**)
+- modifying the rexply file directly (`$HOME/rexply/rexply.bash`); or
+- modifying the additional config file (`$HOME/rexply/rexply.cfg`)
 
-We will avoid updating the additional config file but take your own backups, please.
+We will avoid updating the additional config file but _take your backups before updating_, please.
 
 ## To-do
 
 - [ ] test if everything works in OSX (help wanted)
 - [ ] re-factor some giant functions to smaller, dedicated functions
-- [ ] improve textarea fields (the char `|` currently breaks field<->text association)
+- [ ] improve textarea fields (the char `|` currently breaks field<->data association)
 - [ ] provide a way to create new bashdown files with front-matter variables using the script itself
 - [ ] buy more coffee (please donate below!)
 

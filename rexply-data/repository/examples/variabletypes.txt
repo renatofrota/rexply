@@ -1,14 +1,15 @@
 ---
-preview:true
-text:customer
+field:customer:Customer
 txt:code:
-num:minutes:10!0..20#ignored comment
+num:minutes:10!0..20!5
+#preview:true
+#editor:full
 ---
 Hello ${customer},
 
 Thanks for getting in touch with us.
 
-To resolve this problem I've added this code to [b]public_html/.htaccess[/b]:
+To resolve this problem I've added this code to [b]public_html/.htaccess[/b] file on your account:
 
 [code]${code}[/code]
 
