@@ -382,7 +382,7 @@ selectfile() {
 			[[ "$timeout" -gt "0" ]] && ytimeout="--timeout=$timeout" || ytimeout=""
 			name=$(yad --list --title="reXply" --text="Select the folder/file" --column="Files" --column="@fore@" --column="@back@" --no-headers --width="300" --height="$height" $ytimeout --search-column="1" --regex-search ${options[@]} 2>/dev/null)
 		else
-			name=$( for dirorfile in ${options[@]}; do echo -e "$dirorfile"; done | dmenu $( [[ "$bottoms" != "0" ]] && echo "-b" ) -l $vertlis -i -p "reXply" )
+			name=$( for dirorfile in ${options[@]}; do echo -e "$dirorfile"; done | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb $( [[ "$bottoms" != "0" ]] && echo "-b" ) -l $vertlis -i -p "reXply" )
 		fi
 		case $? in
 			0) ;;
