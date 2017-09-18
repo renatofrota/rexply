@@ -43,7 +43,7 @@ yfolder=('green' 'white') # yad foreground and background colors used for the su
 yfnames=('blue' 'white') # yad foreground and background colors used for all the filename entries.
 
 belight='1' # use dmenu (a simpler and lightweight selector) on file/directories selection dialogs
-lighter='0' # use dmenu to process all dialogs (including front-matter forms): kill yad dependency 
+lighter='1' # use dmenu to process all dialogs (including front-matter forms): kill yad dependency 
 bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
 vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
 preview='1' # display a "live preview" of front-matter bashdown variables bellow dmenu input field
