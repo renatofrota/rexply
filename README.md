@@ -84,13 +84,15 @@ When inserting this template, reXply will ask you to provide the data to the 3 v
 - the code _you've used to resolve the problem_ (as stated in this template)
 - in how many minutes before the changes should reflect (a field pre-filled with "10" and freely editable - if using dmenu - or with nice +/- buttons and limited to 0-20 - if using yad)
 
-#### Currently accepted variable types
+#### Variable types and syntax
+
+The currently accepted front-matter variable types and syntax are the following (this list will grow):
 
 1. text or entry (single line input)
-   - `text:customer` (the default value will be `customer` as the var name)
-   - `text:customer:` (adding a trailing `:` the default value will be empty)
+   - `text:customer` (the default value will be `customer`, i.e.: the variable name)
+   - `text:customer:` (defaults to a literal `${varname}`, i.e.: the placeholder vars stays on template)
    - `text:customer:-`
-   - `text:customer:Customer`
+   - `text:customer:Customer` 
    - `text:customer:John`
 2. txt or textarea (multiline input)
    - `txt:instructions`
@@ -122,7 +124,7 @@ this line is not exactly a comment but will be ignored: 'this' is not a valid va
   1. disable preview in config (obviously);
   2. use less-common words as variable names;
   3. prepend them with a _prefix__ (e.g.: `field_customer`) making the variable names still _readable_ but much less likely (near impossible) to match your input data;
-  4. add a field 'preview:false' to disable field preview for a particular file. The same way you can add a field 'preview:true' to enable preview for a particular file if/when globally disabled in reXply config.
+  4. add a field `preview:false` to disable field preview for a particular file. The same way you can add a field 'preview:true' to enable preview for a particular file if/when globally disabled in reXply config.
 
 ### Bash scripts
 
