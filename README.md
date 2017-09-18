@@ -36,7 +36,7 @@ The files can be:
 
 - regular text files
 - "bashdown" files
-- "bashdown" files with frontmatter-like headers
+- "bashdown" files with front-matter headers
 - bash scripts (or any other binary/executable script/application, if you change a setting in reXply config)
 
 ### Regular text files
@@ -49,7 +49,7 @@ You can add bash commands within **$()** on your file. These will be executed by
 
 Environment variables like $USER, $PWD, etc are also replaced - even when outside $().
 
-### Bashdown files with frontmatter-like headers
+### Bashdown files with front-matter headers
 
 Create a section at the top of the file, with one or more variables. Each variable can have.
 
@@ -101,10 +101,28 @@ When inserting this template, reXply will ask you to provide the data to the 3 v
    - `num:minutes:`
    - `num:minutes:10`
    - `num:minutes:10!0..20`
+4. preview (used just to control if previewing of all front-matter variables in dmenu is enabled)
+   - `preview:true` (or aliases: on, yes, enable(d), 1)
+   - `preview:false` (or aliases: off, no, disable(d), 0)
 
-#### A quick tip:
+#### Comments within front-matter header
 
-- you can type `\\n` while filling in frontmatter variables data - reXply will convert these to line breaks when pasting the data to your application.
+```
+---
+text:var_name:default value#this is comment (variable is processed)
+#numthis line is also a comment
+this line is not exactly a comment but will be ignored: 'this' is not a valid variable type
+---
+```
+
+#### Front-matter tips:
+
+- you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
+- the preview lines (those displayed below dmenu when `$preview='1'` is set, while processing a file with front-matter variables) are "filtered" as you type and will eventually disappear: once the input text do not match any of them! If it is a problem (you often ends up selecting an existing item) you can:
+  1. disable preview in config (obviously);
+  2. use less-common words as variable names;
+  3. prepend them with a _prefix__ (e.g.: `field_customer`) making the variable names still _readable_ but much less likely (near impossible) to match your input data;
+  4. add a field 'preview:false' to disable field preview for a particular file. The same way you can add a field 'preview:true' to enable preview for a particular file if/when globally disabled in reXply config.
 
 ### Bash scripts
 
@@ -134,15 +152,21 @@ We will avoid updating the additional config file but take your own backups, ple
 
 ## To-do
 
-- [ ] do further tests with OSX (help is welcome)
-- [ ] provide a way to create new bashdown + frontmatter files using the script
-- [ ] get rich
+- [ ] test if everything works in OSX (help wanted)
+- [ ] re-factor some giant functions to smaller, dedicated functions
+- [ ] improve textarea fields (the char `|` currently breaks field<->text association)
+- [ ] provide a way to create new bashdown files with front-matter variables using the script itself
+- [ ] buy more coffee (please donate below!)
 
 ## More info regarding the dependencies
 
-1. `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visuals, change both `$lighter` and `$suplite` variables to `0` so you can use `yad` instead for all functions that would use `dmenu` (leaving `$lighter` enabled and `$suplite` disabled, `yad` will be used only to process files with "bashdown frontmatter templates").
-2. `xclip` may be substituted with `xsel` with quick edits to the script, but xclip is also widespread and demonstrated to be more reliable on my tests. The script is somewhat "ready" to use `pbcopy` instead on OSX - I just had no time to test in OSX yet, so it may need some polishing.
-3. `xdotool` is used to handle the copy of processed data to clipboard and pasting the data to the destination app. You can disable automatic pasting, or use "echo" as paste command and pipe this script output to `pbpaste`, etc and you can skip the dependency on `xdotool`.
+- `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visuals, change both `$lighter` and `$suplite` variables to `0` so you can use `yad` instead for all functions that would use `dmenu` (leaving `$lighter` enabled and `$suplite` disabled, `yad` will be used only when processing files containing a "bashdown front-matter template").
+- `xclip` may be substituted with `xsel` (see `$copycmd` option) or `pbcopy` and `pbpaste`, useful in OSX - I just had no time to test yet, so it may need some polishing.
+- `xdotool` is used to handle the window focus (and apparently, it's not that easy to make it work on OSX due to `XTEST` not being active by default). You can get rid of this dependency by disabling `$focusit` option. Possible problems:
+  - \(requires more testing) if you are using the script to paste data (with `xclip` or `xsel`) while another window is set as _'always-on-top'_: the data will most likely end up being pasted to the window set as _'always-on-top'_ instead the desired window.
+  - you still need to paste (xdotool is used by default). To this, you have 2 alternatives:
+    1. use `$pastedefault='eval cat $tmpfile'` (**with single quotes**) as paste command and pipe this script output to `pbcopy` (e.g.: `rexply | pbcopy`) - the data will be copied to clipboard, now just paste it manually; or
+    2. disable automatic pasting (`$pasteit='0'`) and set it to keep the _tmpfile_ after processed (`$killtmp='0'`), then use the processed data saved as _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own ways.
 
 ## Donate
 

@@ -1,13 +1,14 @@
 ---
+preview:true
 text:customer
-txt:code
-num:minutes:10!0..20
+txt:code:
+num:minutes:10!0..20#ignored comment
 ---
 Hello ${customer},
 
 Thanks for getting in touch with us.
 
-To resolve this problem I've added this code to .htaccess:
+To resolve this problem I've added this code to [b]public_html/.htaccess[/b]:
 
 [code]${code}[/code]
 

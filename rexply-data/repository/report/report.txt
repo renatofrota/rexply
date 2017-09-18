@@ -1,21 +1,22 @@
 ---
-txt:repetitive:-
-txt:mightreoccur:-
-txt:suggestions:-
-txt:other:-
+preview:true
+txt:field_repetitive:-
+txt:field_mightreoccur:-
+txt:field_suggestions:-
+txt:field_other:-
 ---
 1. Repetitive or reoccurring issues:
 
-${repetitive}
+${field_repetitive}
 
 2. Cases that I believe might reoccur for other clients services:
 
-${mightreoccur}
+${field_mightreoccur}
 
 3. Suggestions:
 
-${suggestions}
+${field_suggestions}
 
 4. Other:
 
-${other}
+${field_other}
