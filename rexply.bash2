@@ -99,7 +99,7 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 
 
 # INTERNAL SETUP
-# set -x
+set -x
 run=$(basename ${BASH_SOURCE[0]});
 realpath="${BASH_SOURCE[0]}";
 while [[ -h "$realpath" ]]; do
@@ -132,15 +132,16 @@ bashdown() {
 		if [[ ! -z $header ]]; then
 			yadform "${header}" || yerror "unable to process headers" || exit $?
 			txt="$(awk "/^---$/{i++}i>=2{print}" "$filename" | tail -n +2)" || yerror "unable to strip headers from file: $filename" || exit $?
+			unset IFS
 		fi
 	fi
-	ifs "e"
+	IFS=''
 	txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $?
 	echo "$txt" | while read line; do
-		[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line" | sed 's/"/\\"/g')\"")"
+		[[ "$line" =~ '$' ]] && line="$(eval "printf \"$( printf "%s" "$line" | sed 's/"/\\"/g')\"")"
 		printf -- "$line""$enter"
 	done || yerror "error bashing down the file contents" || exit $?
-	ifs "r"
+	unset IFS
 	return 0
 }
 
@@ -156,7 +157,7 @@ yform() {
 }
 
 yadform() {
-	ifs "n"
+	IFS=$'\n'
 	yadfields=()
 	dmenufields=()
 	types=('preview' 'editor' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text')
@@ -215,10 +216,10 @@ yadform() {
 		done
 	done
 	if [[ "$lighter" != "1" ]]; then
-		ifs "p"
+		IFS='|'
 		yform=($(yform ${yadfields[@]}))
 		[[ $? == 0 ]] || { log "Notice: aborted" || backwindow || exit $? ; }
-		ifs "n"
+		IFS=$'\n'
 		yfieldsstep=0
 		for yfields in ${yfieldlist[@]}; do
 			value=$(echo -e "${yform[$yfieldsstep]}")
@@ -236,7 +237,7 @@ yadform() {
 			[[ ! -z "$value" ]] && dmenufields[$dfields]=$value && export ${dfields}=$value || log "Error: aborted" || exit $?
 		done
 	fi
-	ifs "r"
+	unset IFS
 }
 
 yerror() {
@@ -376,7 +377,7 @@ selectfile() {
 	if [[ -f $1 ]] || [[ -h $1 ]]; then
 		echo $1
 	else
-		ifs "n"
+		IFS=$'\n'
 		options=()
 		[[ "$breakit" == "1" ]] && options+=("/..") && [[ "$belight" != "1" ]] && options+=(${yparent[@]})
 		for subdirs in $(find -L $replies -mindepth 1 -maxdepth 1 -type d -readable | sed "s@$replies@@g" | sort -n); do
@@ -416,7 +417,7 @@ selectfile() {
 				yerror "invalid directory/file: $1/$name" || exit $?
 			fi
 		fi
-		ifs "r"
+		unset IFS
 	fi
 }
 
@@ -592,15 +593,6 @@ while getopts "a:b:B:m:d:p:r:k:f:w:l:L:b:V:t:R:vch" opt; do
 	esac
 done
 shift $((OPTIND-1));
-
-IFS_OLD=$IFS
-
-ifs() {
-	[[ "$1" == "e" ]] && IFS='' && return 0
-	[[ "$1" == "n" ]] && IFS=$'\n' && return 0
-	[[ "$1" == "p" ]] && IFS=$'|' && return 0
-	[[ "$1" == "r" ]] && IFS=$OLD_IFS && return 0
-}
 
 init && run $replies
 exit 1
