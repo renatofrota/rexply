@@ -1,6 +1,6 @@
 #!/bin/bash
 # reXply
-version="0.0.5"
+version="0.0.6"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -320,7 +320,6 @@ init() {
 	[[ "$yadfile" != "1" ]] || [[ "$yadform" != "1" ]] && apps+=('dmenu')
 	[[ "$copytoc" != "0" ]] && [[ "$pasteit" != "1" ]] && restore="0"
 	[[ "$cbackup" != "1" ]] && restore="0"
-	[[ "$pasteit" != "1" ]] && restore="0"
 	[[ "$pasteit" != "1" ]] && focusit="0"
 	{ [[ "$pasteterminal" =~ xdotool ]] && [[ "$PPID" != "1" ]] ; } || {
 		[[ "$pastedefault" =~ xdotool ]] && [[ "$PPID" == "1" ]] ; } || {
@@ -619,8 +618,12 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
+	v0.0.6 - 2017-09-20
+		[+] added -P parameter (to set paste command for both terminal and regular windows)
+		[*] pasting is disabled and copycmd is set 3 (pbcopy/pbpaste) automatically on OSX
+
 	v0.0.5 - 2017-09-20
-		[*] improved logics (e.g.: auto skip clipboard restore when skip pasting)
+		[*] improved logics (e.g.: skip clipboard restore when skip pasting and data is on clipboard)
 		[*] moved example scripts to a single folder to keep repository clean
 		[+] new method/options to list directories and files ($listord)
 		[*] PID detection when $focusit='0' (or -f 0)
