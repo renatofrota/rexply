@@ -637,7 +637,7 @@ vchanges() {
 "
 }
 
-while getopts "a:b:c:Cd:e:f:hk:l:L:m:p:r:R:t:vVw:x" opt; do
+while getopts "a:b:c:Cd:e:f:hk:m:p:r:R:t:vVw:xy:Y:" opt; do
 	case $opt in
 		a) showall="$OPTARG" ;;
 		b) cbackup="$OPTARG" ;;
@@ -649,8 +649,6 @@ while getopts "a:b:c:Cd:e:f:hk:l:L:m:p:r:R:t:vVw:x" opt; do
 		f) focusit="$OPTARG" ;;
 		h) showhelp ; exit 0 ;;
 		k) killtmp="$OPTARG" ;;
-		l) yadfile="$OPTARG" ;;
-		L) yadform="$OPTARG" ;;
 		m) maxsize="$OPTARG" ;;
 		p) pasteit="$OPTARG" ;;
 		r) restore="$OPTARG" ;;
@@ -660,6 +658,8 @@ while getopts "a:b:c:Cd:e:f:hk:l:L:m:p:r:R:t:vVw:x" opt; do
 		V) vrelease ; exit 0 ;;
 		w) waitbit="$OPTARG" ;;
 		x) set -x ;;
+		y) yadfile="$OPTARG" ;;
+		Y) yadform="$OPTARG" ;;
 		*) showhelp ; exit 1 ;;
 	esac
 done
