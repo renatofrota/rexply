@@ -30,9 +30,11 @@ focusit='1' # focus the window before pasting - prevents unwanted pastes to alwa
 # note: by disabling 'focusit' option the default clipboard and paste command will always be used!
 # eliminates the xdotool dependency - useful in OSX - but you will need to paste the data manually
 pasteit='1' # truly (and automatically) paste data after you select source file and it's processed
+[[ "$OSTYPE" == "darwin" ]] && pasteit='0' # this disables clipboard pasting in OSX automatically!
 restore='1' # restore original clipboard data - disabling this you can paste data many other times
 deltemp='1' # kill the tmpfile after pasting. disable it if you want to [re]use the processed data
 copycmd='1' # use xclip(1), xsel(2) or pbcopy/pbpaste(3) for all clipboard data manipulation steps
+[[ "$OSTYPE" == "darwin" ]] && copycmd='3' # this is to make pbcopy default for OSX automatically!
 waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/script interruption)
 
 bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
@@ -318,6 +320,7 @@ init() {
 	[[ "$yadfile" != "1" ]] || [[ "$yadform" != "1" ]] && apps+=('dmenu')
 	[[ "$copytoc" != "0" ]] && [[ "$pasteit" != "1" ]] && restore="0"
 	[[ "$cbackup" != "1" ]] && restore="0"
+	[[ "$pasteit" != "1" ]] && restore="0"
 	[[ "$pasteit" != "1" ]] && focusit="0"
 	{ [[ "$pasteterminal" =~ xdotool ]] && [[ "$PPID" != "1" ]] ; } || {
 		[[ "$pastedefault" =~ xdotool ]] && [[ "$PPID" == "1" ]] ; } || {
