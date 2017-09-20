@@ -1,5 +1,6 @@
 #!/bin/bash
-# reXply 0.0.2
+# reXply
+version="0.0.5"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -34,16 +35,6 @@ killtmp='1' # kill the tmpfile after pasting. disable it if you want to [re]use 
 copycmd='1' # use xclip(1), xsel(2) or pbcopy/pbpaste(3) for all clipboard data manipulation steps
 waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/script interruption)
 
-# yad selection dialog height. default values are optimal for mint cinnamon, adjust per your needs
-peritem='23'
-minimum='84'
-
-yparent=('red' 'white') # yad foreground and background colors in "/.." items (navigate to parent)
-yfolder=('green' 'white') # yad foreground and background colors used for the subdirectory entries
-yfnames=('blue' 'white') # yad foreground and background colors used for all the filename entries.
-
-belight='1' # use dmenu (a simpler and lightweight selector) on file/directories selection dialogs
-lighter='1' # use dmenu to process all dialogs (including front-matter forms): kill yad dependency
 bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
 vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
 preview='1' # display a "live preview" of front-matter bashdown variables bellow dmenu input field
@@ -58,10 +49,25 @@ dmenusf='blue' # selected item foregound
 dmenusb='white' # selected item background
 #RGB, #RRGGBB, and X color names are supported
 
-maxsize='3' # display only files whose's size is up to X MBs
+# yad selection dialog height. default values are optimal for mint cinnamon, adjust per your needs
+peritem='23'
+minimum='84'
+
+yparent=('red' 'white') # yad foreground and background colors in "/.." items (navigate to parent)
+yfolder=('green' 'white') # yad foreground and background colors used for the subdirectory entries
+yfnames=('blue' 'white') # yad foreground and background colors used for all the filename entries.
+
+yadfile='0' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
+yadform='0' # use yad to process form filling dialogs - when templates have front-matter variables 
+
+maxsize='3' # file selection will only show files up to X MB
+# you can still pass a bigger file via -R or 1st non-opt arg
 showall='0' # show hidden directories and files (be careful)
-breakit='0' # show parent directories (be EVEN MORE careful)
+listord=('e' 'p' 'd' 'f') # choose in which order to display
+# an empty line, parent dir, subdirs, files (resp.: e/p/d/f)
 bashing='1' # enforce executable files (+x) to run with bash
+checkpt='1' # use '@' to mark the end of a template file and
+# strip it after processing (or blank lines will be removed)
 timeout='10' # the timeout for each directory/file selection
 # the timeout is valid only for 'yad' file selection dialogs
 
@@ -77,7 +83,7 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 # 'xdotool click 2' # is often used in combination with terminal windows - to paste from X primary
 # 'xdotool key ctrl+v' # primarily used in combination with regular windows - paste from clipboard
 # 'xdotool key ctrl+shift+v' # recommended(*) alternative to paste on terminal if using clipboard!
-# 'eval cat $tmpfile' # use to "paste" in OSX (pipe to pbcopy: rexply | pbcopy) and paste manually
+# 'eval cat $1' # "paste" to stdout without xdotool (or pass '-p 0' and data will be in clipboard)
 
 # (*) IMPORTANT
 # paste from primary with 'xdotool click 2' will paste to window under your MOUSE CURRENT POSITION
@@ -99,7 +105,6 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 
 
 # INTERNAL SETUP
-# set -x
 run=$(basename ${BASH_SOURCE[0]});
 realpath="${BASH_SOURCE[0]}";
 while [[ -h "$realpath" ]]; do
@@ -167,10 +172,10 @@ yadform() {
 				ydata=$(echo $fmfield | cut -d : -f 2-)
 				ydata1=$(echo $ydata | cut -d : -f 1)
 				ydata2=$(echo $ydata | cut -d : -f 2-)
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|0) ]] && lighter="1"
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|1) ]] && lighter="0"
-				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && { [[ "$lighter" != "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1") ; }
-				if [[ "$lighter" != "1" ]]; then
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|0) ]] && yadform="0"
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|1) ]] && yadform="1"
+				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && { [[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1") ; }
+				if [[ "$yadform" == "1" ]]; then
 					case $ytype in
 						preview|editor)
 							;;
@@ -214,7 +219,7 @@ yadform() {
 			fi
 		done
 	done
-	if [[ "$lighter" != "1" ]]; then
+	if [[ "$yadform" == "1" ]]; then
 		ifs "p"
 		yform=($(yform ${yadfields[@]}))
 		[[ $? == 0 ]] || { log "Notice: aborted" || backwindow || exit $? ; }
@@ -242,7 +247,7 @@ yadform() {
 yerror() {
 	local yexit=$?
 	log "Error: $@"
-	if [[ "$lighter" != "1" ]]; then
+	if [[ "$yadform" == "1" ]]; then
 		yad --image "dialog-error" --width="180" --title="reXply failed" --text="Error: $@"
 	else
 		echo -e "\nError: $@\n\n" | dmenu -b -nf white -nb red -sf white -sb red -l 10 -p "reXply"
@@ -252,12 +257,12 @@ yerror() {
 }
 
 yask() {
-	if [[ "$lighter" != "1" ]]; then
+	if [[ "$yadform" == "1" ]]; then
 		yad --question --title="reXply question" --text="$1"
 	else
 		answer=""
-		while [[ "$answer" != "(Y)es" ]] && [[ "$answer" != "(N)o" ]]; do
-			answer=$(echo -e "$1\n[1] Yes\n[0] No" | dmenu -b -nf white -nb darkgreen -sf darkgreen -sb white -l $vertlis -p "reXply")
+		while [[ "$answer" != "[1] Yes" ]] && [[ "$answer" != "[0] No" ]]; do
+			answer=$(echo -e "$1\n[1] Yes\n[0] No" | dmenu -b -nf white -nb darkgreen -sf darkgreen -sb white -l $vertlis -i -p "reXply")
 		done
 		[[ $answer =~ 1 ]] && return 0 || return 1
 	fi
@@ -270,6 +275,7 @@ backwindow() {
 }
 
 pasteit() {
+	txt="$(cat -)"
 	if [[ "$focusit" == "1" ]]; then
 		proc=$(xdotool getwindowpid $window 2>>$logfile) || yerror "unable to obtain origin window pid (did the process terminate?)" || exit $?
 		cmdline="$(cat /proc/$proc/cmdline | tr '[:upper:]' '[:lower:]')" || yerror "unable to obtain active window cmdline" || exit $?
@@ -282,7 +288,7 @@ pasteit() {
 			clipboard=$clipboarddefault
 		fi
 	else
-		paste=$pastedefault
+		[[ "$PPID" == "1" ]] && { paste=$pastedefault ; log "PPID: $PPID (default)" ; } || { paste=$pasteterminal ; log "PPID: $PPID (terminal)" ; }
 		clipboard=$clipboarddefault
 	fi
 	if [[ "$cbackup" != "0" ]]; then
@@ -291,14 +297,14 @@ pasteit() {
 	fi
 	if [[ "$copytoc" ]]; then
 		case $copycmd in
-			'1') xclip -selection $clipboard -i $tmpfile ;;
-			'2') xsel  --$clipboard -i $tmptile ;;
-			'3') cat $tmpfile | pbcopy ;;
+			'1') xclip -selection $clipboard -i $1 ;;
+			'2') xsel  --$clipboard -i $1 ;;
+			'3') cat $1 | pbcopy ;;
 			*) yerror "invalid \$copycmd value (set 1 for xclip, 2 for xsel, 3 for pbcopy/pbpaste)" || exit 1 ;;
 		esac
 		[[ $? != 0 ]] && { yerror "unable to copy tmpfile $i to $clipboard" || exit $? ; }
 	fi
-	[[ "$pasteit" != "0" ]] && { $paste && sleep "${waitbit}s" || yerror "unable to paste data to pid $proc ($cmdline)" || exit $? ; }
+	[[ "$pasteit" != "0" ]] && { ${paste} && sleep "${waitbit}s" || yerror "unable to paste data to pid $proc ($cmdline)" || exit $? ; }
 	if [[ $restore != "0" ]]; then
 		[[ "$copycmd" == "1" ]] && restoreclipboard="xclip -selection $clipboard" || { [[ "$copycmd" == "2" ]] && restoreclipboard="xsel --$clipboard" || restoreclipboard="pbcopy" ; }
 		echo $originalclipboard | $restoreclipboard || yerror "unable to restore original clipboard data" || exit $?
@@ -308,11 +314,15 @@ pasteit() {
 init() {
 	apps=()
 	[[ "$bashing" != "0" ]] && bashing="bash"
-	[[ "$lighter" == "1" ]] && belight="1"
-	[[ "$belight" == "1" ]] && apps+=('dmenu')
-	[[ "$lighter" != "1" ]] && apps+=('yad')
-	[[ "$focusit" == "1" ]] && apps+=('xdotool')
-	[[ "$cbackup" != "0" ]] || [[ "$restore" != "0" ]] && {
+	[[ "$yadfile" == "1" ]] || [[ "$yadform" == "1" ]] && apps+=('yad')
+	[[ "$yadfile" != "1" ]] || [[ "$yadform" != "1" ]] && apps+=('dmenu')
+	[[ "$copytoc" != "0" ]] && [[ "$pasteit" != "1" ]] && restore="0"
+	[[ "$cbackup" != "1" ]] && restore="0"
+	[[ "$pasteit" != "1" ]] && focusit="0"
+	{ [[ "$pasteterminal" =~ xdotool ]] && [[ "$PPID" != "1" ]] ; } || {
+		[[ "$pastedefault" =~ xdotool ]] && [[ "$PPID" == "1" ]] ; } || {
+			[[ "$focusit" == "1" ]] ; } && { apps+=('xdotool') ; }
+	[[ "$cbackup" != "0" ]] || [[ "$copytoc" != "0" ]] && {
 		[[ "$copycmd" == "1" ]] && apps+=('xclip')
 		[[ "$copycmd" == "2" ]] && apps+=('xsel')
 		[[ "$copycmd" == "3" ]] && apps+=('pbcopy' 'pbpaste')
@@ -339,19 +349,23 @@ init() {
 		done
 	fi
 	for dirs in "$replies" "$(dirname $tmpfile)" "$(dirname $logfile)"; do
-		if [[ ! -d "$dirs" ]]; then
+		if [[ ! -d "$dirs" ]] && [[ ! -f "$dirs" ]]; then
 			mkdir -p "$dirs" || { echo "Error: unable to create directory: $dirs" >&2 ; exit 1 ; }
 		fi
 	done
 	:>>$logfile || { echo "Error: logfile ($logfile) is not writable" ; exit 1 ; }
 	:>$tmpfile || yerror "tmpfile ($tmpfile) is not writable" || exit $?
 	[[ "$focusit" == "1" ]] && { window=$(xdotool getactivewindow 2>>$logfile) || yerror "unable to detect active window" || exit $? ; }
+	maxsize=$((maxsize+1))
 	return 0
 }
 
+replies() {
+	[[ ! -z "$1" ]] && { [[ "$1" == "/"* ]] && replies=$1 || replies=$replies/$1 ; } || yerror="invalid custom path" || exit $?
+}
+
 run() {
-	maxsize=$((maxsize+1))
-	[[ ! -z "$1" ]] && { [[ "$1" == "/"* ]] && replies=$1 || replies=$replies/$1 ; }
+	[[ ! -z "$1" ]] && replies "$1"
 	filename=$(selectfile $replies)
 	[[ $? != 0 ]] && exit $?
 	if [[ -f "$filename" ]]; then
@@ -359,65 +373,100 @@ run() {
 			${bashing} "$filename" &> $tmpfile || yerror "unable to write $filename execution output to tmpfile: $tmpfile" || exit $?
 		else
 			content="$(cat "$filename" | bashdown)"
-			[[ $? != 0 ]] && exit $?
+			[[ $? != 0 ]] && { yerror "unable to save bashdown content into a shell var" || exit $? ; }
 			if [[ "${#content}" == 0 ]]; then
 				printf "$filename" > $tmpfile || yerror "unable to write $filename contents to tmpfile: $tmpfile" || exit $?
 			else
 				printf "%s" "$content" > $tmpfile || yerror "unable to write 'bashdown' output of $filename to tmpfile: $tmpfile" || exit $?
 			fi
 		fi
-		pasteit $tmpfile || yerror "unable to paste data" || exit $?
+		[[ "$checkpt" == "1" ]] && checkpt $tmpfile || yerror "unable to remove the placeholder char at end of $tmpfile" || exit $?
+		cat $tmpfile | pasteit $tmpfile || yerror "unable to paste data" || exit $?
 		[[ "$killtmp" == "1" ]] && { rm -f $tmpfile || yerror "unable to remove tmpfile: $tmpfile" || exit $? ; }
 		exit 0
 	fi
 }
 
+checkpt() {
+	lastline="$(tail -1 $1)"
+	while [[ "$lastline" == *"@" ]]; do
+		truncate -s -1 $1 || yerror "failure on truncating $1 at it's last byte" || exit $?
+		sleep "${waitbit}s"
+		lastline="$(tail -1 $1)"
+	done
+}
+
+e() {
+	[[ "$yadfile" != "1" ]] && options+=(" ")
+	return 0
+}
+
+p() {
+	options+=("/..")
+	[[ "$yadfile" == "1" ]] && options+=(${yparent[@]})
+	return 0
+}
+
+d() {
+	for subdirs in $(find -L $replies -mindepth 1 -maxdepth 1 -type d -readable | sed "s@$replies@@g" | sort -n); do
+		[[ "$subdirs" != "/."* ]] || [[ "$showall" == "1" ]] && options+=("$subdirs") && [[ "$yadfile" == "1" ]] && options+=(${yfolder[@]})
+	done
+	return 0
+}
+
+f() {
+	for files in $(find -L $replies -mindepth 1 -maxdepth 1 ! -name \*.swp -size -${maxsize}M -type f -readable | sed "s@$replies\/@@g" | sort -n); do
+		[[ "$files" != "."* ]] || [[ "$showall" == "1" ]] && options+=("$files") && [[ "$yadfile" == "1" ]] && options+=(${yfnames[@]})
+	done
+	return 0
+}
+
 selectfile() {
-	if [[ -f $1 ]] || [[ -h $1 ]]; then
-		echo $1
+	[[ -f $1 ]] && echo $1 && return 0
+	ifs "n"
+	options=()
+	tolistfunctions=('e' 'p' 'd' 'f')
+	for tolist in ${listord[@]}; do
+		for tolistfunction in ${tolistfunctions[@]}; do
+			[[ "$tolist" == "$tolistfunction" ]] && { $tolist || yerror "error" || exit $? ; }
+		done
+	done
+	if [[ "$yadfile" == "1" ]]; then
+		height=$(awk -v items=${#options[@]} -v ih=$peritem -v mh=$minimum 'BEGIN{printf "%d", ((items/3)*ih)+mh}')
+		[[ "$timeout" -gt "0" ]] && height=$((height+10))
+		name=$(yad --list --title="reXply" --text="Select the folder/file" --column="Files" --column="@fore@" --column="@back@" --no-headers --width="300" --height="$height" --timeout="$timeout" --timeout-indicator="top" --search-column="1" --regex-search ${options[@]} 2>/dev/null)
 	else
-		ifs "n"
-		options=()
-		[[ "$breakit" == "1" ]] && options+=("/..") && [[ "$belight" != "1" ]] && options+=(${yparent[@]})
-		for subdirs in $(find -L $replies -mindepth 1 -maxdepth 1 -type d -readable | sed "s@$replies@@g" | sort -n); do
-			[[ "$subdirs" != "/."* ]] || [[ "$showall" == "1" ]] && options+=("$subdirs") && [[ "$belight" != "1" ]] && options+=(${yfolder[@]})
-		done
-		for files in $(find -L $replies -mindepth 1 -maxdepth 1 ! -name \*.swp -size -${maxsize}M -type f -readable | sed "s@$replies\/@@g" | sort -n); do
-			[[ "$files" != "."* ]] || [[ "$showall" == "1" ]] && options+=("$files") && [[ "$belight" != "1" ]] && options+=(${yfnames[@]})
-		done
-		if [[ "$belight" != "1" ]]; then
-			height=$(awk -v items=${#options[@]} -v ih=$peritem -v mh=$minimum 'BEGIN{printf "%d", ((items/3)*ih)+mh}')
-			[[ "$timeout" -gt "0" ]] && height=$((height+10))
-			name=$(yad --list --title="reXply" --text="Select the folder/file" --column="Files" --column="@fore@" --column="@back@" --no-headers --width="300" --height="$height" --timeout="$timeout" --timeout-indicator="top" --search-column="1" --regex-search ${options[@]} 2>/dev/null)
-		else
-			name=$( for dirorfile in ${options[@]}; do echo -e "$dirorfile"; done | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb $( [[ "$bottoms" != "0" ]] && echo "-b" ) -l $vertlis -i -p "reXply" )
-		fi
-		case $? in
-			0) ;;
-			1) log "Notice: aborted by user" || backwindow || exit $? ;;
-			70) yerror "timeout" || exit $? ;;
-			252) log "Notice: aborted by user" || backwindow || exit $? ;;
-			*) log "Unknow error: dmenu returned status code $?" || backwindow || exit $? ;;
-		esac
-		name=$(echo $name | sed 's,|$,,')
-		if [[ "$name" == "/.." ]]; then
-			replies=$(dirname $replies)
-			selectfile $replies || yerror "unable to navigate to parent directory: $replies" || exit $?
-			return 0
-		fi
-		if [[ -d "$replies/$name" ]]; then
-			replies=$replies$name
-			selectfile $replies || yerror "unable to navigate to subdirectory: $replies" || exit $?
-			return 0
-		else
-			if [[ -f $1/$name ]]; then
-				echo $1/$name
-			else
-				yerror "invalid directory/file: $1/$name" || exit $?
-			fi
-		fi
-		ifs "r"
+		name=$( for dirorfile in ${options[@]}; do echo -e "$dirorfile"; done | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb $( [[ "$bottoms" != "0" ]] && echo "-b" ) -l $vertlis -i -p "reXply" )
 	fi
+	case $? in
+		0) ;;
+		1) log "Notice: aborted by user" || backwindow || exit $? ;;
+		70) yerror "timeout" || exit $? ;;
+		252) log "Notice: aborted by user" || backwindow || exit $? ;;
+		*) log "Unknow error: dmenu returned status code $?" || backwindow || exit $? ;;
+	esac
+	name=$(echo $name | sed 's,|$,,')
+	if [[ "$name" == " " ]]; then
+		selectfile $replies || yerror "unable to proceed with directory selection" || exit $?
+		return 0
+	fi
+	if [[ "$name" == "/.." ]]; then
+		replies=$(dirname $replies)
+		selectfile $replies || yerror "unable to navigate to parent directory: $replies" || exit $?
+		return 0
+	fi
+	if [[ -d "$replies/$name" ]]; then
+		replies=$replies/$name
+		selectfile $replies || yerror "unable to navigate to subdirectory: $replies" || exit $?
+		return 0
+	else
+		if [[ -f "$replies/$name" ]]; then
+			echo "$replies/$name"
+		else
+			yerror "invalid directory/file: $replies$name" || exit $?
+		fi
+	fi
+	ifs "r"
 }
 
 showhelp() {
@@ -429,7 +478,7 @@ showhelp() {
 	Parameters:
 
 	-a X
-		show All files (include hidden directories/files)
+		show All files (including hidden directories/files)
 		directories/files starting with a dot (like .dir or .file) will be displayed
 		0 to disable, 1 to enable
 		current default: $showall
@@ -437,24 +486,51 @@ showhelp() {
 	-b X
 		Backup clipboard data
 		0 to disable, 1 to enable
-		current default: $breakit
+		current default: $cbackup
 
 	-B X
-		[potentially] Break it
-		Allow browsing (and running scripts/templates on) parent directories (be careful!)
+		place selection menu at Bottom of screen menu
 		0 to disable, 1 to enable
-		current default: $breakit
+		note: needs $yadfile='0' or -l 1 to take effect
+		current default: $bottoms
 
-	-m XX
-		Max size
-		maximum file size to display (in megabytes)
-		integer value (1, 5, 10, ...)
-		current default: $maxsize
+	-c X
+		copy processed data to clipboard
+		0 to disable, 1 to enable
+		current default: $copytoc
+
+	-C
+		view full Changelog
 
 	-d X
 		check Dependencies
 		0 to disable, 1 to enable
 		current default: $deptest
+
+	-e X
+		vErtical listing
+		0 to disable, 1 to enable
+		note: needs $yadfile='1' or -l 1 to take effect
+		current default: $vertlis
+
+	-f X
+		Focus the originally active window before pasting
+		(prevents unwanted pastes to 'always-on-top' windows)
+		0 to disable, 1 to enable
+		current default: $focusit
+
+	-h
+		Show this help message
+
+	-k X
+		Kill the tmp file (i.e.: delete it) after reply is processed/pasted
+		0 to disable, 1 to enable
+		current default: $killtmp
+
+	-m XX
+		Maximum file size to display (in megabytes)
+		integer value (1, 5, 10, ...)
+		current default: $maxsize
 
 	-p X
 		Paste the reply
@@ -467,43 +543,17 @@ showhelp() {
 		0 to disable, 1 to enable
 		current default: $restore
 
-	-k X
-		Kill the tmp file (i.e.: delete it) after reply is processed/pasted
-		0 to disable, 1 to enable
-		current default: $killtmp
+	-R <path> | <file>
+		Repository path (or a direct file to process/run)
+		set a custom path from where to load the replies/scripts
 
-	-f X
-		Focus the originally active window before pasting (prevents unwanted pastes to 'keep-on-top' windows)
-		0 to disable, 1 to enable
-		current default: $focusit
+		it can be an absolute path (starting with /)
+		it can be a relative path (relative to current default repository)
+		it can be an absolute/relative path to a file to be processed/run
 
-	-w X.X
-		Wait time (in seconds) after pasting (prevent pasting interruption)
-		integer/float (0.1, 0.5, 1, ...)
-		current default: $waitbit
+		tip: you can also pass the repository/file path as the first non-option argument
 
-	-l X
-		be Light interface (use 'dmenu' instead fancy 'yad' dialogs on file selections)
-		0 to disable, 1 to enable
-		current default: $belight
-
-	-L X
-		Lighter (use 'dmenu' for all dialogs, including front-matter forms)
-		0 to disable, 1 to enable
-		note: implies -l 1 (be Light)
-		current default: $lighter
-
-	-b X
-		place selection menu at Bottom of screen menu
-		0 to disable, 1 to enable
-		note: needs -l 1 (Lighter) to take effect
-		current default: $bottoms
-
-	-V X
-		Vertical listing
-		0 to disable, 1 to enable
-		note: needs -l 1 (Lighter) to take effect
-		current default: $vertlis
+		current default: $replies
 
 	-t XX
 		Timeout in seconds
@@ -511,29 +561,42 @@ showhelp() {
 		note: needs -l 0, -s 0, to take effect
 		current default: $timeout
 
-	-R <path> | <file>
-		Repository path - or a direct file to process/run
-		set a custom path from where to load the replies/scripts
-
-		it can be an absolute path (starting with /)
-		it can be a relative path (relative to current default repository)
-		it can be an absolute/relative path to a file to be processed/run
-
-		current default: $replies
-
 	-v
 		Show version number
 
-	-c
-		Show changelog and versio notes
+	-V
+		Show release notes
 
-	-h
-		Show this help message
+	-w X.X
+		Wait time (in seconds) after pasting (prevent pasting interruption)
+		integer/float (0.1, 0.5, 1, ...)
+		current default: $waitbit
+
+	-x
+		set x bit on process execution for debug
+
+	-y X
+		Yad file selection interface
+		Use 'yad' fancy dialogs for file selections instead 'dmenu'
+		0 to disable, 1 to enable
+		current default: $yadfile
+
+	-Y X
+		Yad Forms
+		Use 'yad' forms to insert template's front-matter variables
+		0 to disable, 1 to enable
+		current default: $yadform
 "
 }
 
 vversion() {
-	echo "reXply v0.0.3 - https://github.com/renatofrota/rexply"
+	echo "reXply $version - https://github.com/renatofrota/rexply"
+}
+
+vrelease() {
+	vversion
+	echo -e "\nRelease notes:\n"
+	vchanges | awk "/^\tv$version/{i++}i>=1{print}" | awk "/^\tv/{i++}i<2{print}"
 }
 
 vchanges() {
@@ -541,6 +604,13 @@ vchanges() {
 	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
 
 	https://github.com/renatofrota/rexply
+
+	v0.0.5 - 2017-09-20
+		[*] improved logics (e.g.: auto skip clipboard restore when skip pasting)
+		[*] moved example scripts to a single folder to keep repository clean
+		[+] new method/options to list directories and files ($listord)
+		[*] PID detection when $focusit='0' (or -f 0)
+		[*] better $IFS management
 
 	v0.0.4 - 2017-09-18
 		[*] fixed a problem with 'editor' not taking effect or affecting other fields under some circumstances
@@ -567,27 +637,29 @@ vchanges() {
 "
 }
 
-while getopts "a:b:B:m:d:p:r:k:f:w:l:L:b:V:t:R:vch" opt; do
+while getopts "a:b:c:Cd:e:f:hk:l:L:m:p:r:R:t:vVw:x" opt; do
 	case $opt in
 		a) showall="$OPTARG" ;;
 		b) cbackup="$OPTARG" ;;
-		B) breakit="$OPTARG" ;;
-		m) maxsize="$OPTARG" ;;
+		B) bottoms="$OPTARG" ;;
+		c) copytoc="$OPTARG" ;;
+		C) vchanges ; exit 0 ;;
 		d) deptest="$OPTARG" ;;
+		e) vertlis="$OPTARG" ;;
+		f) focusit="$OPTARG" ;;
+		h) showhelp ; exit 0 ;;
+		k) killtmp="$OPTARG" ;;
+		l) yadfile="$OPTARG" ;;
+		L) yadform="$OPTARG" ;;
+		m) maxsize="$OPTARG" ;;
 		p) pasteit="$OPTARG" ;;
 		r) restore="$OPTARG" ;;
-		k) killtmp="$OPTARG" ;;
-		f) focusit="$OPTARG" ;;
-		w) waitbit="$OPTARG" ;;
-		l) belight="$OPTARG" ;;
-		L) lighter="$OPTARG" ;;
-		b) bottoms="$OPTARG" ;;
-		V) vertlis="$OPTARG" ;;
+		R) replies "$OPTARG" ;;
 		t) timeout="$OPTARG" ;;
-		R) replies="$OPTARG" ;;
 		v) vversion ; exit 0 ;;
-		c) vchanges ; exit 0 ;;
-		h) showhelp ; exit 0 ;;
+		V) vrelease ; exit 0 ;;
+		w) waitbit="$OPTARG" ;;
+		x) set -x ;;
 		*) showhelp ; exit 1 ;;
 	esac
 done
@@ -602,5 +674,5 @@ ifs() {
 	[[ "$1" == "r" ]] && IFS=$OLD_IFS && return 0
 }
 
-init && run $replies
+init && run $1
 exit 1

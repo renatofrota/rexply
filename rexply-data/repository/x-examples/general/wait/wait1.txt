@@ -3,9 +3,10 @@ field:customer:Customer
 ---
 Hello ${customer},
 
-Thank you for contacting our Help Desk. 
+Thank you for contacting our Help Desk.
 
-Please allow us some time to investigate your case. 
+Please allow us some time to investigate your case.
 
 I will update this ticket with more information once it is available.
 
+@

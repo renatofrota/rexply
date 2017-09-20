@@ -106,7 +106,7 @@ The currently accepted front-matter variable types and syntax are the following 
 4. `preview`: override `$preview` setting for a particular template file
    - `preview:true` (or aliases: on, yes, enable(d), 1)
    - `preview:false` (or aliases: off, no, disable(d), 0)
-5. `editor`: override `$lighter` setting for a particular template file
+5. `editor`: override `$yadform` setting for a particular template file
    - `editor:true` (or aliases: yad, full, gui, visual, on, enable(d), 1)
    - `editor:false` (or aliases: dmenu, light, cli, text, off, disable(d), 0)
 
@@ -132,7 +132,7 @@ this line is not exactly a comment but will be ignored: 'this' is not a valid va
 #### Front-matter tips:
 
 - you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
-- the preview lines (those displayed below `dmenu` when both `$lighter='1'` and `$preview='1'` are set, while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
+- the preview lines (those displayed below `dmenu` when both `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
   1. disable preview specifically for that template, by adding `preview:false` to it's front-matter;
   2. use less-common words as variable names (or just combine words like `customer_name`);
   3. change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
@@ -146,7 +146,7 @@ They are **executed** (from your homedir as initial working directory) when sele
 For these, I recommend you:
 
 - add `#!/bin/bash` hashbang at the top
-- use .sh or .bash extension (so your text editors also know they are shell executable files)
+- use .bash or .sh extension (so your text editors also know they are shell executable files)
 - make them executable with `chmod +x path/to/filename.bash` (it's actually mandatory, or they will be parsed as a regular text template)
 
 ## More information
@@ -168,20 +168,20 @@ We will avoid updating the additional config file but _take your backups before 
 ## To-do
 
 - [ ] test if everything works in OSX (help wanted)
-- [ ] re-factor some giant functions to smaller, dedicated functions
-- [ ] improve textarea fields (the char `|` currently breaks field<->data association)
+- [ ] improve textarea fields (the pipe char `|` currently breaks field<->data associations)
 - [ ] provide a way to create new bashdown files with front-matter variables using the script itself
 - [ ] buy more coffee (please donate below!)
 
 ## More info regarding the dependencies
 
-- `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visuals, change both `$lighter` and `$suplite` variables to `0` so you can use `yad` instead for all functions that would use `dmenu` (leaving `$lighter` enabled and `$suplite` disabled, `yad` will be used only when processing files containing a "bashdown front-matter template").
-- `xclip` may be substituted with `xsel` (see `$copycmd` option) or `pbcopy` and `pbpaste`, useful in OSX - I just had no time to test yet, so it may need some polishing.
+- `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visual, with screen-centered dialogs, ability to fill in all front-matter variables of a template in a single - floating window - form, set options `$yadfile` (file selection) and `$yadform` (front-matter form) to `1` (or run `rexply -y 1 -Y 1`) so you can use `yad` instead.
+- `xclip` may be substituted with `xsel` (see `$copycmd` option) or `pbcopy` and `pbpaste` - useful in OSX, I just had no time to test yet, so it may need some polishing.
 - `xdotool` is used to handle the window focus (and apparently, it's not that easy to make it work on OSX due to `XTEST` not being active by default). You can get rid of this dependency by disabling `$focusit` option. Possible problems:
   - \(requires more testing) if you are using the script to paste data (with `xclip` or `xsel`) while another window is set as _'always-on-top'_: the data will most likely end up being pasted to the window set as _'always-on-top'_ instead the desired window.
   - you still need to paste (xdotool is used by default). To this, you have 2 alternatives:
-    1. use `$pastedefault='eval cat $tmpfile'` (**with single quotes**) as paste command and pipe this script output to `pbcopy` (e.g.: `rexply | pbcopy`) - the data will be copied to clipboard, now just paste it manually; or
-    2. disable automatic pasting (`$pasteit='0'`) and set it to keep the _tmpfile_ after processed (`$killtmp='0'`), then use the processed data saved as _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own ways.
+    1. use `$pastedefault='eval cat $1'` and `$pasteterminal='eval cat $1'` (**note the single quotes**) as paste command and pipe reXply to whichever program you want to use to handle this. Theoretically, piping the output to `pbcopy` (e.g.: `rexply | pbcopy`) the data will be copied to clipboard and you can just paste it manually in sequence. I could not test in Linux (pbcopy not available and `xclip`/`xsel` handle input buffer a bit differently), so in case it does not work, you can test the next options;
+    2. set `$pasteit='0'` (or at least `$restore='0'`) and `$copycmd='3'` (or run reXply like this: `rexply -p 0 -c 3` / `rexply -r 0 -c 3`) and reXply will use `pbcopy` on it's own;
+    3. there's still a third method: disable automatic pasting with `$pasteit='0'` and also set it to keep the _tmpfile_ after processed (`$killtmp='0'`), then use the processed data saved as _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own ways.
 
 ## Donate
 
