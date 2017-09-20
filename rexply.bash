@@ -31,7 +31,7 @@ focusit='1' # focus the window before pasting - prevents unwanted pastes to alwa
 # eliminates the xdotool dependency - useful in OSX - but you will need to paste the data manually
 pasteit='1' # truly (and automatically) paste data after you select source file and it's processed
 restore='1' # restore original clipboard data - disabling this you can paste data many other times
-killtmp='1' # kill the tmpfile after pasting. disable it if you want to [re]use the processed data
+deltemp='1' # kill the tmpfile after pasting. disable it if you want to [re]use the processed data
 copycmd='1' # use xclip(1), xsel(2) or pbcopy/pbpaste(3) for all clipboard data manipulation steps
 waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/script interruption)
 
@@ -382,7 +382,7 @@ run() {
 		fi
 		[[ "$checkpt" == "1" ]] && checkpt $tmpfile || yerror "unable to remove the placeholder char at end of $tmpfile" || exit $?
 		cat $tmpfile | pasteit $tmpfile || yerror "unable to paste data" || exit $?
-		[[ "$killtmp" == "1" ]] && { rm -f $tmpfile || yerror "unable to remove tmpfile: $tmpfile" || exit $? ; }
+		[[ "$deltemp" == "1" ]] && { rm -f $tmpfile || yerror "unable to remove tmpfile: $tmpfile" || exit $? ; }
 		exit 0
 	fi
 }
@@ -503,6 +503,11 @@ showhelp() {
 		view full Changelog
 
 	-d X
+		Delete the tmp file (i.e.: delete it) after reply is processed/pasted
+		0 to disable, 1 to enable
+		current default: $deltemp
+
+	-D X
 		check Dependencies
 		0 to disable, 1 to enable
 		current default: $deptest
@@ -521,11 +526,6 @@ showhelp() {
 
 	-h
 		Show this help message
-
-	-k X
-		Kill the tmp file (i.e.: delete it) after reply is processed/pasted
-		0 to disable, 1 to enable
-		current default: $killtmp
 
 	-m XX
 		Maximum file size to display (in megabytes)
@@ -637,18 +637,19 @@ vchanges() {
 "
 }
 
-while getopts "a:b:c:Cd:e:f:hk:m:p:r:R:t:vVw:xy:Y:" opt; do
+while getopts "a:b:c:Cd:D:e:f:hk:m:p:r:R:t:vVw:xy:Y:" opt; do
 	case $opt in
 		a) showall="$OPTARG" ;;
 		b) cbackup="$OPTARG" ;;
 		B) bottoms="$OPTARG" ;;
 		c) copytoc="$OPTARG" ;;
 		C) vchanges ; exit 0 ;;
-		d) deptest="$OPTARG" ;;
+		d) deltemp="$OPTARG" ;;
+		D) deptest="$OPTARG" ;;
 		e) vertlis="$OPTARG" ;;
 		f) focusit="$OPTARG" ;;
 		h) showhelp ; exit 0 ;;
-		k) killtmp="$OPTARG" ;;
+		k) checkpt="$OPTARG" ;;
 		m) maxsize="$OPTARG" ;;
 		p) pasteit="$OPTARG" ;;
 		r) restore="$OPTARG" ;;

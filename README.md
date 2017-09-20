@@ -69,7 +69,7 @@ To resolve this problem I've added this code to [b]public_html/.htaccess[/b] fil
 
 This change should reflect in aproximately ${minutes} minutes.
 
-
+@
 ```
 
 When inserting this template, reXply will ask you to provide the data to the 3 variables:
@@ -83,6 +83,8 @@ After the variable name, you can add `:` and the default input for that variable
 If using `dmenu`, you will see an empty field with a 'selection' below (the default input). You can type any value or just hit enter to use the pre-selected option. One field at a time. Optionally, a preview of all the fields can be displayed underneath the selector (`$preview='1'`).
 
 If using `yad`, a form will be displayed, with all fields visible and editable simultaneously. Each field is pre-filled with the default value data (or the variable name, if you have set no default value). Numeric fields will have +/- buttons - and may be limited to the range you have defined. In the example above `!0..20!5` means _"a value between 0 to 20, in steps of 5"_. The "steps" are only for the +/- buttons (or up/down arrows): any value within the allowed range can be _manually_ entered.
+
+Oh, and the @ at the end is to confirm you want the 2 blank lines processed (any `@` at the very end of the template is removed during processing - if `$checkpt` is enabled, or `-k 1` is passed). Without it, the 2 lines would be discarded.
 
 #### Variable types and syntax
 
