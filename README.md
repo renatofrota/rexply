@@ -178,12 +178,16 @@ We will avoid updating the additional config file but _take your backups before 
 
 - `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visual, with screen-centered dialogs, ability to fill in all front-matter variables of a template in a single - floating window - form, set options `$yadfile` (file selection) and `$yadform` (front-matter form) to `1` (or run `rexply -y 1 -Y 1`) so you can use `yad` instead.
 - `xclip` may be substituted with `xsel` (see `$copycmd` option) or `pbcopy` and `pbpaste` - useful in OSX, I just had no time to test yet, so it may need some polishing.
-- `xdotool` is used to handle the window focus (and apparently, it's not that easy to make it work on OSX due to `XTEST` not being active by default). You can get rid of this dependency by disabling `$focusit` option. Possible problems:
-  - \(requires more testing) if you are using the script to paste data (with `xclip` or `xsel`) while another window is set as _'always-on-top'_: the data will most likely end up being pasted to the window set as _'always-on-top'_ instead the desired window.
-  - you still need to paste (xdotool is used by default). To this, you have 2 alternatives:
-    1. use `$pastedefault='eval cat $1'` and `$pasteterminal='eval cat $1'` (**note the single quotes**) as paste command and pipe reXply to whichever program you want to use to handle this. Theoretically, piping the output to `pbcopy` (e.g.: `rexply | pbcopy`) the data will be copied to clipboard and you can just paste it manually in sequence. I could not test in Linux (pbcopy not available and `xclip`/`xsel` handle input buffer a bit differently), so in case it does not work, you can test the next options;
-    2. set `$pasteit='0'` (or at least `$restore='0'`) and `$copycmd='3'` (or run reXply like this: `rexply -p 0 -c 3` / `rexply -r 0 -c 3`) and reXply will use `pbcopy` on it's own;
-    3. there's still a third method: disable automatic pasting with `$pasteit='0'` and also set it to keep the _tmpfile_ after processed (`$killtmp='0'`), then use the processed data saved as _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own ways.
+- `xdotool` is used to handle the window focus (and apparently, it's not that easy to make it work on OSX due to `XTEST` not being active by default). You can get rid of this dependency by disabling `$focusit` option. A possible problem if you are using the script to paste data (with `xclip` or `xsel`) while another window is set as _'always-on-top'_: the data will sometimes end up being pasted to the window set as _'always-on-top'_ instead the desired window (depends on the application and other circumstances - not tested on OSX yet).
+
+## OSX
+
+`xdotool` is used to paste in Linux by default. In OSX, the default is **no automatic pasting** and using pbcopy/pbpaste instead (`$pasteit='0'` and `$copycmd='3'`). The processed data should be on your clipboard, just paste it manually after running reXply.
+
+If you want to try automatic pasting, there are 2 ways to implement it:
+
+1. set `$pastedefault='eval cat $1'` and `$pasteterminal='eval cat $1'` (or just pass `-P 'eval cat $1'` parameter) - **note the single quotes** - and pipe reXply to whichever program you want to use to handle the data in sequence. Just as an example, at least theoretically, piping the output to `pbcopy` (e.g.: `rexply -P 'eval cat $1' | pbcopy`) the data will be copied to clipboard (as reXply does by default) and you can paste it manually. I could not test (pbcopy not available in my Linux distro and `xclip`/`xsel` handles input buffer a bit differently). Feel free to try this and other ways to parse the output :)
+2. there's another option: disable automatic pasting with `$pasteit='0'` (what is default for OSX) and also set it to keep the _tmpfile_ after processed (`$deltemp='0'` or `-d 0`), then use the processed data saved at _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own way.
 
 ## Donate
 

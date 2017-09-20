@@ -472,6 +472,11 @@ selectfile() {
 	ifs "r"
 }
 
+pastepp() {
+	pastedefault="$1"
+	pasteterminal="$1"
+}
+
 showhelp() {
 	echo "
 	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
@@ -540,6 +545,12 @@ showhelp() {
 		0 to disable, 1 to enable
 		note: implies -r 0 (do not Restore original clipboard)
 		current default: $pasteit
+
+	-P 'command $1'
+		set the Paste command (for both terminal and regular windows)
+		yhe variable '$1' represents the tmpfile holding the processed data
+		you will probably want to use single quotes and parse it using 'eval'
+		example: -P 'eval cat $1'
 
 	-r X
 		Restore original clipboard data after reply is processed/pasted
@@ -640,7 +651,7 @@ vchanges() {
 "
 }
 
-while getopts "a:b:c:Cd:D:e:f:hk:m:p:r:R:t:vVw:xy:Y:" opt; do
+while getopts "a:b:c:Cd:D:e:f:hk:m:p:P:r:R:t:vVw:xy:Y:" opt; do
 	case $opt in
 		a) showall="$OPTARG" ;;
 		b) cbackup="$OPTARG" ;;
@@ -655,6 +666,7 @@ while getopts "a:b:c:Cd:D:e:f:hk:m:p:r:R:t:vVw:xy:Y:" opt; do
 		k) checkpt="$OPTARG" ;;
 		m) maxsize="$OPTARG" ;;
 		p) pasteit="$OPTARG" ;;
+		P) pastepp "$OPTARG" ;;
 		r) restore="$OPTARG" ;;
 		R) replies "$OPTARG" ;;
 		t) timeout="$OPTARG" ;;
