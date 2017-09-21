@@ -21,12 +21,12 @@ ln -s ~/rexply/rexply.bash $(echo $PATH|cut -d: -f1)/rexply
 echo "reXply installed to $(echo $PATH|cut -d: -f1)/rexply"
 ```
 
-- it works from command line (terminal) - just type in 'rexply' - but it is only **1% as useful as it could be** by running it this way.
-- to feel the power:
-  1. add the custom command `rexply` to your Keyboard shortcuts/keybindings area;
-  2. bind a key to the custom command you've created
-  3. go to an editor, browser, or any other text area field
-  4. press the binded key and be amazed!
+It works from command line (terminal) - just type in 'rexply' - but it is only **1% as useful as it could be** by running it this way. To feel the power:
+
+1. add the custom command `rexply` to your Keyboard shortcuts/keybindings area;
+2. bind a key to the custom command you've created
+3. go to an editor, browser, or any other text area field
+4. press the binded key and be amazed!
 
 ## More advanced operation
 
@@ -88,32 +88,34 @@ Oh, and the @ at the end is to confirm you want the 2 blank lines processed (any
 
 #### Variables syntax
 
-The syntax for a front-matter variable of type `field` accepts the following formats:
+The syntax for a front-matter variable of type `field` accepts the 3 following formats:
 
-- `field:customer` - the default value will be `customer`, i.e.: the variable name
-- `field:customer:` - defaults to a literal `${varname}`, i.e.: the 'placeholder' var stay as is
-- `field:customer:Customer` - defaults to 'Customer'
+1. `field:customer` - the default value will be `customer`, i.e.: the variable name
+2. `field:customer:` - defaults to a literal `${varname}`, i.e.: the 'placeholder' var stay as is
+3. `field:customer:Customer` - defaults to 'Customer'
 
-#### Variables types
+#### Data variables types
 
-- `field`, `var`,  `text` or `entry` - single line input field
-- `txt` or `textarea` - multiline (textarea) input field
-- `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
+Currently, 3 types of data variables are supported
+
+1. `field`, `var`,  `text` or `entry` - single line input field
+2. `txt` or `textarea` - multiline (textarea) input field
+3. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
    - a default is specified as usual: `num:minutes:10`
    - an accepted range is specific by appending `!MIN..MAX` (e.g.: `num:minutes:10!0..20`)
    - the stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
    - note: the acceptance of these settings depends on the application you use to process front-matter vars (`$yadform` or `-Y` parameter)
-   - **yad**
-     1. accepts all parameters
-     2. the visual +/- buttons and up/down keyboard arrows respect the range and stepping
-     3. you can still manually type a value out of the range and/or disrespecting the stepping
-   - **dmenu**
-     1. takes the default value
-     2. discard all the rest
+     - **yad**
+       - accepts all parameters
+       - the visual +/- buttons and up/down keyboard arrows respect the range and stepping
+       - you can still manually type a value out of the range and/or disrespecting the stepping
+     - **dmenu**
+       - takes the default value
+       - discard all the rest
 
-#### Front-matter overrides
+#### Front-matter overrides variables
 
-Some special front-matter variables can be used to override reXply options.
+2 special front-matter variables can be used to override reXply options.
 
 1. `preview`: override `$preview` setting for a particular template file
    - `preview:true` (or aliases: on, yes, enable(d), 1)
@@ -125,11 +127,11 @@ Some special front-matter variables can be used to override reXply options.
 #### Specifics of each _form-filling_ utility
 
 - dmenu:
-  1. It does not allow you paste data.
-  2. Enter submit data. To add line breaks, type `\\n`.
+  - It does not allow you paste data.
+  - Enter submit data. To add line breaks, type `\\n`.
 - yad:
-  1. It allows you paste data on it's fields. However, you cannot use `|` in provided data as it will break the field<->data association (any data after a `|` will be associated to the next field and all the next are also pushed 1 field down).
-  2. You may find it hard to tabulate textarea fields. Use Ctrl+tab.
+  - It allows you paste data on it's fields. However, you cannot use `|` in provided data as it will break the field<->data association (any data after a `|` will be associated to the next field and all the next are also pushed 1 field down).
+  - You may find it hard to tabulate textarea fields. Use Ctrl+tab.
 
 #### Comments within front-matter header
 
@@ -143,23 +145,19 @@ this line is not exactly a comment but will be ignored: 'this' is not a valid va
 
 #### Front-matter tips:
 
-- you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
-- the preview lines (those displayed below `dmenu` when both `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
-  1. disable preview specifically for that template, by adding `preview:false` to it's front-matter;
-  2. use less-common words as variable names (or just combine words like `customer_name`);
-  3. change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
-  4. prepend all them with a _prefix__ (e.g.: `field:field_customer:Customer`), making the variable names still _readable_ but much less likely (near impossible) to match your input data;
-  5. make the variable name all uppercase;
+1. you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
+2. the preview lines (those displayed below `dmenu` when both `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
+  - disable preview specifically for that template, by adding `preview:false` to it's front-matter;
+  - use less-common words as variable names (or just combine words like `customer_name`);
+  - change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
+  - prepend all them with a _prefix__ (e.g.: `field:field_customer:Customer`), making the variable names still _readable_ but much less likely (near impossible) to match your input data;
+  - make the variable name all uppercase;
 
 ### Bash scripts
 
-They are **executed** (from your homedir as initial working directory) when selected in the menu (**be careful!**)
+They are **executed** (from your homedir as initial working directory) when selected in the menu (**be careful!**) and you have execution permissions over the file (`chmod +x path/to/filename.bash`). If the is not executable, no matter the extension, it will be processed as a regular text/bashdown template.
 
-For these, I recommend you:
-
-- add `#!/bin/bash` hashbang at the top
-- use .bash or .sh extension (so your text editors also know they are shell executable files)
-- make them executable with `chmod +x path/to/filename.bash` (it's actually mandatory, or they will be parsed as a regular text template)
+I recommend you add `#!/bin/bash` hashbang at the top of the file and use .bash or .sh extension so your text editors also know they are shell executable files.
 
 ## More information
 
