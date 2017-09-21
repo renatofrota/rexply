@@ -86,29 +86,41 @@ If using `yad`, a form will be displayed, with all fields visible and editable s
 
 Oh, and the @ at the end is to confirm you want the 2 blank lines processed (any `@` at the very end of the template is removed during processing - if `$checkpt` is enabled, or `-k 1` is passed). Without it, the 2 lines would be discarded.
 
-#### Variable types and syntax
+#### Variables syntax
 
-The currently accepted front-matter variable types and syntax are the following (this list will grow):
+The syntax for a front-matter variable of type `field` accepts the following formats:
 
-1. `field`, `var`, `text` or `entry`: regular text input field
-   - `field:customer` (the default value will be `customer`, i.e.: the variable name)
-   - `field:customer:` (defaults to a literal `${varname}`, i.e.: the placeholder vars stays on template)
-   - `field:customer:-`
-   - `field:customer:Customer` 
-   - `field:customer:John`
-2. `txt` or `textarea`: multiline (textarea) input field
-   - `txt:instructions`
-   - `txt:instructions:`
-   - `txt:instructions:Access URL X and click button Y`
-3. `num` or `numeric`: field that _defaults_ to a numeric value [with a defined range of accepted values]
-   - `num:minutes`
-   - `num:minutes:`
-   - `num:minutes:10`
-   - `num:minutes:10!0..20`
-4. `preview`: override `$preview` setting for a particular template file
+1. `field:customer` (the default value will be `customer`, i.e.: the variable name)
+2. `field:customer:` (defaults to a literal `${varname}`, i.e.: the 'placeholder' var stay as is)
+3. Anything after the `:` char will be used as default value: 
+   - `field:customer:Customer` (defaults to 'Customer')
+   - `field:customer:John` (defaults to 'John')
+
+#### Variables types
+
+1. `field`, `var`,  `text` or `entry` - single line input field
+2. `txt` or `textarea` - multiline (textarea) input field
+3. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ]
+   - a default is specified as usual: `num:minutes:10`
+   - an accepted range is specific by appending `!MIN..MAX` (e.g.: `num:minutes:10!0..20`)
+   - stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
+   - the acceptance of these settings depends on the application you use to process front-matter vars (`$yadform` or `-Y` parameter)
+   - **yad**
+     1. accepts all parameters
+     2. the visual +/- buttons and up/down keyboard arrows respect the range and stepping
+     3. you can still manually type a value out of the range and/or disrespecting the stepping
+   - **dmenu**
+     1. takes the default value
+     2. discard all the rest
+
+#### Front-matter overrides
+
+Some special front-matter variables can be used to override reXply options.
+
+1. `preview`: override `$preview` setting for a particular template file
    - `preview:true` (or aliases: on, yes, enable(d), 1)
    - `preview:false` (or aliases: off, no, disable(d), 0)
-5. `editor`: override `$yadform` setting for a particular template file
+2. `editor`: override `$yadform` setting for a particular template file
    - `editor:true` (or aliases: yad, full, gui, visual, on, enable(d), 1)
    - `editor:false` (or aliases: dmenu, light, cli, text, off, disable(d), 0)
 
@@ -118,7 +130,7 @@ The currently accepted front-matter variable types and syntax are the following 
   1. It does not allow you paste data.
   2. Enter submit data. To add line breaks, type `\\n`.
 - yad:
-  1. It allows you paste data on it's fields. However, you cannot use `|` in provided data (it will break the field<->data association: any data after a `|` will be associated to the next field (and all the next are also pushed 1 field down).
+  1. It allows you paste data on it's fields. However, you cannot use `|` in provided data as it will break the field<->data association (any data after a `|` will be associated to the next field and all the next are also pushed 1 field down).
   2. You may find it hard to tabulate textarea fields. Use Ctrl+tab.
 
 #### Comments within front-matter header
