@@ -90,21 +90,19 @@ Oh, and the @ at the end is to confirm you want the 2 blank lines processed (any
 
 The syntax for a front-matter variable of type `field` accepts the following formats:
 
-1. `field:customer` (the default value will be `customer`, i.e.: the variable name)
-2. `field:customer:` (defaults to a literal `${varname}`, i.e.: the 'placeholder' var stay as is)
-3. Anything after the `:` char will be used as default value: 
-   - `field:customer:Customer` (defaults to 'Customer')
-   - `field:customer:John` (defaults to 'John')
+- `field:customer` - the default value will be `customer`, i.e.: the variable name
+- `field:customer:` - defaults to a literal `${varname}`, i.e.: the 'placeholder' var stay as is
+- `field:customer:Customer` - defaults to 'Customer'
 
 #### Variables types
 
-1. `field`, `var`,  `text` or `entry` - single line input field
-2. `txt` or `textarea` - multiline (textarea) input field
-3. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ]
+- `field`, `var`,  `text` or `entry` - single line input field
+- `txt` or `textarea` - multiline (textarea) input field
+- `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
    - a default is specified as usual: `num:minutes:10`
    - an accepted range is specific by appending `!MIN..MAX` (e.g.: `num:minutes:10!0..20`)
-   - stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
-   - the acceptance of these settings depends on the application you use to process front-matter vars (`$yadform` or `-Y` parameter)
+   - the stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
+   - note: the acceptance of these settings depends on the application you use to process front-matter vars (`$yadform` or `-Y` parameter)
    - **yad**
      1. accepts all parameters
      2. the visual +/- buttons and up/down keyboard arrows respect the range and stepping
