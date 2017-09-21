@@ -137,9 +137,9 @@ Currently, 3 types of data variables are supported
 
 ```
 ---
-field:var_name:default value#this is comment (variable is processed)
-#numthis line is also a comment
-this line is not exactly a comment but will be ignored: 'this' is not a valid variable type
+field:var_name:default value#this is a comment (variable is processed)
+#this line is also a comment. this method or above are valid and recommended
+this line is not a comment but parsing will fail: 'this' is not a valid variable type
 ---
 ```
 
