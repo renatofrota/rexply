@@ -1,6 +1,6 @@
 #!/bin/bash
 # reXply
-version="0.0.6"
+version="0.0.7"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -472,6 +472,7 @@ selectfile() {
 }
 
 pastepp() {
+	pasteit='1'
 	pastedefault="$1"
 	pasteterminal="$1"
 }
@@ -549,6 +550,7 @@ showhelp() {
 		set the Paste command (for both terminal and regular windows)
 		yhe variable '$1' represents the tmpfile holding the processed data
 		you will probably want to use single quotes and parse it using 'eval'
+		note: implies -p 1 (enable pasting)
 		example: -P 'eval cat $1'
 
 	-r X
@@ -617,6 +619,9 @@ vchanges() {
 	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
 
 	https://github.com/renatofrota/rexply
+
+	v0.0.7 - 2017-09-20
+		[*] -P now implies -p
 
 	v0.0.6 - 2017-09-20
 		[+] added -P parameter (to set paste command for both terminal and regular windows)
