@@ -1,6 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.0.8c"
+version="0.0.8"
+revision="d"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -189,7 +190,7 @@ yadform() {
 	ifs "n"
 	yadfields=()
 	dmenufields=()
-	types=('literal' 'runeval' 'preview' 'editor' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text')
+	types=('literal' 'runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text')
 	for fmfield in $@; do
 		ytype=$(echo $fmfield | cut -d : -f 1 | tr '[:upper:]' '[:lower:]')
 		for type in "${types[@]}"; do
@@ -197,13 +198,13 @@ yadform() {
 				ydata=$(echo $fmfield | cut -d : -f 2-)
 				ydata1=$(echo $ydata | cut -d : -f 1)
 				ydata2=$(echo $ydata | cut -d : -f 2-)
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|yes|enable|1) ]] && yadform="1"
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|no|disable|0) ]] && yadform="0"
+				[[ "$ytype" =~ (editor|yadform) ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|yes|enable|1) ]] && yadform="1"
+				[[ "$ytype" =~ (editor|yadform) ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|no|disable|0) ]] && yadform="0"
 				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && literal="1"
 				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && literal="0"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && runeval="1"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && runeval="0"
-				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && [[ $ytype != "literal" ]] && [[ $ytype != "runeval" ]] && {
+				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && [[ $ytype != "yadform" ]] && [[ $ytype != "literal" ]] && [[ $ytype != "runeval" ]] && {
 					[[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1")
 				}
 				if [[ "$yadform" == "1" ]]; then
@@ -668,7 +669,7 @@ showhelp() {
 }
 
 vversion() {
-	echo "reXply $version - https://github.com/renatofrota/rexply"
+	echo "reXply $version$revision - https://github.com/renatofrota/rexply"
 }
 
 vrelease() {
@@ -683,12 +684,13 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
-	v0.0.8c - 2017-09-23
+	v0.0.8 - 2017-09-23
 		[+] config/front-matter var: 'literal' (treat template as a commnd line, do not substitute or run var or subshell)
 		[+] added a special value to \$literal: 2 (consider only one-liners as literal by default)
 		[+] config/front-matter var: 'runeval' (use eval to substitute variables and run subshells)
 		[+] treat hidden subfolders (\"conf folders\") and hidden files differently (than regular folders and files)
 		[+] added \$execute config (-X parameter) to control if files are executed directly or through bash (former \$bashing config)
+		[*] aliased 'editor' front-matter variable as 'yadform' (so all front-matter made to override settings are named equally)
 
 	v0.0.7 - 2017-09-20
 		[*] -P now implies -p

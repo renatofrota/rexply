@@ -117,20 +117,12 @@ Currently, 3 types of data variables are supported
 
 #### Front-matter overrides variables
 
-2 special front-matter variables can be used to override reXply options.
+4 special front-matter variables can be used to override reXply options (they accept `1`/`0`, like the config vars, and `true`/`false`, `yes`/`no` and other alises - specifically as front-matter overrides):
 
-1. `preview`: override `$preview`
-   - `true` (aliases: on, yes, enable(d), 1)
-   - `false` (aliases: off, no, disable(d), 0)
-2. `editor`: override `$yadform`
-   - `true` (aliases: yad, full, gui, visual, on, yes, enable(d), 1)
-   - `false` (aliases: dmenu, light, cli, text, off, no, disable(d), 0)
-3. `literal`: override `$literal`
-   - `true` (aliases: yes, on, 1)
-   - `false` (aliases: no, off, 0)
-4. `runeval`: override `$runeval`
-   - `true` (aliases: yes, on, 1)
-   - `false` (aliases: no, off, 0)
+1. `yadform` or `editor` (overrides `$yadform`)
+2. `preview`
+3. `literal`
+4. `runeval`
 
 #### Specifics of each _form-filling_ utility
 
