@@ -1,6 +1,6 @@
 #!/bin/bash
 # reXply
-version="0.0.8b"
+version="0.0.8c"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -683,7 +683,7 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
-	v0.0.8b - 2017-09-23
+	v0.0.8c - 2017-09-23
 		[+] config/front-matter var: 'literal' (treat template as a commnd line, do not substitute or run var or subshell)
 		[+] added a special value to \$literal: 2 (consider only one-liners as literal by default)
 		[+] config/front-matter var: 'runeval' (use eval to substitute variables and run subshells)

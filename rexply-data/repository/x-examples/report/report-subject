@@ -1,0 +1,3 @@
+---
+---
+Report - $(echo $(date +%d)-1 | bc).$(date +%m.%Y) - your.name
