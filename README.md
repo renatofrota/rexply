@@ -119,13 +119,13 @@ Currently, 3 types of data variables are supported
 
 2 special front-matter variables can be used to override reXply options.
 
-1. `preview`: override `$preview` setting for a particular template file. Accepted values:
+1. `preview`: override `$preview`
    - `true` (aliases: on, yes, enable(d), 1)
    - `false` (aliases: off, no, disable(d), 0)
-2. `editor`: override `$yadform` setting for a particular template file. Accepted values:
+2. `editor`: override `$yadform`
    - `true` (aliases: yad, full, gui, visual, on, yes, enable(d), 1)
    - `false` (aliases: dmenu, light, cli, text, off, no, disable(d), 0)
-3. `literal`: override `$literal` setting for a particular template file. Accepted values:
+3. `literal`: override `$literal`
    - `true` (aliases: yes, on, 1)
    - `false` (aliases: no, off, 0)
 4. `runeval`: override `$runeval`
