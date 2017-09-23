@@ -1,6 +1,6 @@
 #!/bin/bash
 # reXply
-version="0.0.8"
+version="0.0.8b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -74,8 +74,9 @@ execute='1' # if enabled files with +x permission are called
 # directly, otherwise, are called through bash (bash <file>)
 checkpt='1' # use '@' to mark the end of a template file and
 # strip it after processing (or blank lines will be removed)
-literal="1" # treat templates as literal commands by default
+literal="2" # treat templates as literal commands by default
 # if template has a front-matter it's disabled automatically
+# '2' is a special case: consider only one-liners as literal
 runeval="1" # substitute environment vars using eval command
 # if disabled envsubst is used (+secure, but strip newlines)
 # if template has a front-matter it is enabled automatically
@@ -145,6 +146,7 @@ bashdown() {
 	lines="$(cat "$filename" | wc -l)" || yerror "unable to read file: $filename" || exit $?
 	if [[ $lines -le 1 ]]; then
 		enter=""
+		[[ "$literal" == "2" ]] && literal="1"
 	else
 		enter="\n"
 		header=$(cat "$filename" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
@@ -195,10 +197,12 @@ yadform() {
 				ydata=$(echo $fmfield | cut -d : -f 2-)
 				ydata1=$(echo $ydata | cut -d : -f 1)
 				ydata2=$(echo $ydata | cut -d : -f 2-)
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|0) ]] && yadform="0"
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|1) ]] && yadform="1"
-				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (true|on|yes) ]] && literal="1"
-				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (false|off|no) ]] && runeval="0"
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|yes|1) ]] && yadform="1"
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|no|0) ]] && yadform="0"
+				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && literal="1"
+				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && literal="0"
+				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && runeval="1"
+				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && runeval="0"
 				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && [[ $ytype != "literal" ]] && [[ $ytype != "runeval" ]] && {
 					[[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1")
 				}
@@ -585,7 +589,7 @@ showhelp() {
 
 	-l X
 		treat template as a Literal command
-		0 to disable, 1 to enable
+		0 to disable, 1 to enable, 2 enable on one-liners
 		current default: $literal
 
 	-m XX
@@ -679,8 +683,9 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
-	v0.0.8 - 2017-09-23
+	v0.0.8b - 2017-09-23
 		[+] config/front-matter var: 'literal' (treat template as a commnd line, do not substitute or run var or subshell)
+		[+] added a special value to \$literal: 2 (consider only one-liners as literal by default)
 		[+] config/front-matter var: 'runeval' (use eval to substitute variables and run subshells)
 		[+] treat hidden subfolders (\"conf folders\") and hidden files differently (than regular folders and files)
 		[+] added \$execute config (-X parameter) to control if files are executed directly or through bash (former \$bashing config)
