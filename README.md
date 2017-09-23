@@ -35,9 +35,9 @@ The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`.
 The files can be:
 
 - regular text files
-- "bashdown" files
-- "bashdown" files with front-matter headers
-- bash scripts (or any other binary/executable script/application, if you change a setting in reXply config)
+- "bashdown" files (to be run using `eval`)
+- front-matter powered templates
+- bash scripts (or any other binary/executable script/application - if you change a setting in reXply config)
 
 ### Regular text files
 
@@ -45,11 +45,13 @@ No secrets on this. I just recommend you append .txt to the file names so your e
 
 ### Bashdown files
 
-You can add bash commands within `$()` on your file. These will be executed by bash (**with your homedir as initial working directory**) and their output will replace the command dynamically in the template.
+You can add bash subshells `$()` on your file. These will be executed (**with your homedir as their initial working directory**) and their output will replace the subshell dynamically in the template (just like as any command you run in your shell).
 
-Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_.
+Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_
 
-### Bashdown files with front-matter headers
+Note: some consider eval dangerous (have you ever heard _eval is evil_?) so an alternative exists: substitute environment vars using just `envsubst` - the downside is you lose ability to add line breaks (they are replaced by `\n` for the moment - I am looking after alternatives) - if you want to go this way, disable eval by setting `$runeval='0'`, passing `-E 0` parameter, or add `runeval:false` to template).
+
+### Front-matter powered templates
 
 Create a section with some variables at the top of the file (surround the variables by `---` above and below) and use them within template text. Example:
 
@@ -155,9 +157,16 @@ this line is not a comment but parsing will fail: 'this' is not a valid variable
 
 ### Bash scripts
 
-They are **executed** (from your homedir as initial working directory) when selected in the menu (**be careful!**) and you have execution permissions over the file (`chmod +x path/to/filename.bash`). If the is not executable, no matter the extension, it will be processed as a regular text/bashdown template.
+They are **executed** (your homedir is the initial working directory when you start reXply using a keybinding) when selected in the menu (**be careful!**) and you have execution permissions over the file (`chmod +x path/to/filename.bash`).
 
-I recommend you add `#!/bin/bash` hashbang at the top of the file and use .bash or .sh extension so your text editors also know they are shell executable files.
+Please note:
+
+1. if the file is not executable, no matter the extension, it will be processed as a regular text/bashdown template.
+2. the files are executed through `bash` by default (`$bashing='1'`), like this: `bash <file>`
+
+I recommend you add `#!/bin/bash` hashbang at the top of the file and use `.bash` or `.sh` extension so your text editors also know they are shell executable files.
+
+Note: if you disable `$bashing` or pass `-X 0` the file will be executed **direcly** (instead `bash <file>`), making reXply act as a truly and independent "launcher" for your applications/scripts.
 
 ## More information
 
@@ -210,4 +219,3 @@ Think on how much time($) you're saving with this tool and buy me some coffee! :
 > BRL
 
 [![Doar](https://www.paypalobjects.com/pt_BR/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9JMBDY5QA8X5A)
-

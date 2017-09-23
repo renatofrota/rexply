@@ -1,6 +1,6 @@
 #!/bin/bash
 # reXply
-version="0.0.7"
+version="0.0.8"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -55,21 +55,30 @@ dmenusb='white' # selected item background
 peritem='23'
 minimum='84'
 
-yparent=('red' 'white') # yad foreground and background colors in "/.." items (navigate to parent)
-yfolder=('green' 'white') # yad foreground and background colors used for the subdirectory entries
-yfnames=('blue' 'white') # yad foreground and background colors used for all the filename entries.
+# foreground & background colors for yad list items (parent dir, subdirs, normal and hidden files)
+yparent=('red' 'white')
+yfolder=('blue' 'white')
+ycnfdir=('lightgray' 'white')
+yfnames=('green' 'white')
+yhidden=('gray' 'white')
 
 yadfile='0' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
-yadform='0' # use yad to process form filling dialogs - when templates have front-matter variables 
+yadform='0' # use yad to process form filling dialogs - when templates have front-matter variables
 
 maxsize='3' # file selection will only show files up to X MB
 # you can still pass a bigger file via -R or 1st non-opt arg
 showall='0' # show hidden directories and files (be careful)
-listord=('e' 'p' 'd' 'f') # choose in which order to display
-# an empty line, parent dir, subdirs, files (resp.: e/p/d/f)
-bashing='1' # enforce executable files (+x) to run with bash
+listord=('e' 'p' 'd' 'f' 'c' 'h') # choose the display order
+# empty, parent, subdir, file, confdir, hidden (e/p/d/f/c/h)
+execute='1' # if enabled files with +x permission are called
+# directly, otherwise, are called through bash (bash <file>)
 checkpt='1' # use '@' to mark the end of a template file and
 # strip it after processing (or blank lines will be removed)
+literal="1" # treat templates as literal commands by default
+# if template has a front-matter it's disabled automatically
+runeval="1" # substitute environment vars using eval command
+# if disabled envsubst is used (+secure, but strip newlines)
+# if template has a front-matter it is enabled automatically
 timeout='10' # the timeout for each directory/file selection
 # the timeout is valid only for 'yad' file selection dialogs
 
@@ -106,6 +115,9 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 
 
 
+
+
+
 # INTERNAL SETUP
 run=$(basename ${BASH_SOURCE[0]});
 realpath="${BASH_SOURCE[0]}";
@@ -131,22 +143,31 @@ configfile="$rexplydir/rexply.cfg"
 bashdown() {
 	txt="$(cat -)";
 	lines="$(cat "$filename" | wc -l)" || yerror "unable to read file: $filename" || exit $?
-	if [[ $lines == 1 ]]; then
+	if [[ $lines -le 1 ]]; then
 		enter=""
 	else
 		enter="\n"
 		header=$(cat "$filename" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
 		if [[ ! -z $header ]]; then
+			literal="0"
+			runeval="1"
 			yadform "${header}" || yerror "unable to process headers" || exit $?
 			txt="$(awk "/^---$/{i++}i>=2{print}" "$filename" | tail -n +2)" || yerror "unable to strip headers from file: $filename" || exit $?
 		fi
 	fi
 	ifs "e"
-	txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $?
-	echo "$txt" | while read line; do
-		[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line" | sed 's/"/\\"/g')\"")"
-		printf -- "$line""$enter"
-	done || yerror "error bashing down the file contents" || exit $?
+	[[ "$literal" == "1" ]] && enter="" || { [[ "$runeval" == "0" ]] && { txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $? ; } }
+	if [[ "$literal" != '1' ]] && [[ "$runeval" != "0" ]]; then
+		echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
+			[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line" | sed 's/"/\\"/g')\"")"
+			printf -- "$line$enter"
+		done || yerror "error bashing down the file contents" || exit $?
+	else
+		echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
+			[[ "$line" =~ '$' ]] && line="$(printf -- "%s" "$line")"
+			printf -- "%s" "$line$enter"
+		done || yerror "error bashing down the file contents" || exit $?
+	fi
 	ifs "r"
 	return 0
 }
@@ -166,7 +187,7 @@ yadform() {
 	ifs "n"
 	yadfields=()
 	dmenufields=()
-	types=('preview' 'editor' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text')
+	types=('literal' 'runeval' 'preview' 'editor' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text')
 	for fmfield in $@; do
 		ytype=$(echo $fmfield | cut -d : -f 1 | tr '[:upper:]' '[:lower:]')
 		for type in "${types[@]}"; do
@@ -176,11 +197,13 @@ yadform() {
 				ydata2=$(echo $ydata | cut -d : -f 2-)
 				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|0) ]] && yadform="0"
 				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|1) ]] && yadform="1"
-				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && { [[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1") ; }
+				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (true|on|yes) ]] && literal="1"
+				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (false|off|no) ]] && runeval="0"
+				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && [[ $ytype != "literal" ]] && [[ $ytype != "runeval" ]] && {
+					[[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1")
+				}
 				if [[ "$yadform" == "1" ]]; then
 					case $ytype in
-						preview|editor)
-							;;
 						num|numeric)
 							yadfields+=("--field=$ydata1:NUM")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
@@ -202,8 +225,6 @@ yadform() {
 				else
 					declare -A dmenufields
 					case $ytype in
-						editor)
-							;;
 						preview)
 							[[ "$ydata1" =~ (true|on|yes|enable|enabled|1) ]] && preview="1"
 							[[ "$ydata1" =~ (false|off|no|disable|disabled|0) ]] && preview="0"
@@ -315,7 +336,8 @@ pasteit() {
 
 init() {
 	apps=()
-	[[ "$bashing" != "0" ]] && bashing="bash"
+	bashing=""
+	[[ "$execute" != "0" ]] && bashing="bash"
 	[[ "$yadfile" == "1" ]] || [[ "$yadform" == "1" ]] && apps+=('yad')
 	[[ "$yadfile" != "1" ]] || [[ "$yadform" != "1" ]] && apps+=('dmenu')
 	[[ "$copytoc" != "0" ]] && [[ "$pasteit" != "1" ]] && restore="0"
@@ -410,15 +432,29 @@ p() {
 }
 
 d() {
-	for subdirs in $(find -L $replies -mindepth 1 -maxdepth 1 -type d -readable | sed "s@$replies@@g" | sort -n); do
+	for subdirs in $(find -L $replies -mindepth 1 -maxdepth 1 ! -name .\* -type d -readable | sed "s@$replies@@g" | sort -n); do
 		[[ "$subdirs" != "/."* ]] || [[ "$showall" == "1" ]] && options+=("$subdirs") && [[ "$yadfile" == "1" ]] && options+=(${yfolder[@]})
 	done
 	return 0
 }
 
+c() {
+	for confdirs in $(find -L $replies -mindepth 1 -maxdepth 1 -name .\* -type d -readable | sed "s@$replies@@g" | sort -n); do
+		[[ "$showall" == "1" ]] && options+=("$confdirs") && [[ "$yadfile" == "1" ]] && options+=(${ycnfdir[@]})
+	done
+	return 0
+}
+
 f() {
-	for files in $(find -L $replies -mindepth 1 -maxdepth 1 ! -name \*.swp -size -${maxsize}M -type f -readable | sed "s@$replies\/@@g" | sort -n); do
+	for files in $(find -L $replies -mindepth 1 -maxdepth 1 ! -name \*.swp ! -name .\* -size -${maxsize}M -type f -readable | sed "s@$replies\/@@g" | sort -n); do
 		[[ "$files" != "."* ]] || [[ "$showall" == "1" ]] && options+=("$files") && [[ "$yadfile" == "1" ]] && options+=(${yfnames[@]})
+	done
+	return 0
+}
+
+h() {
+	for hiddenfiles in $(find -L $replies -mindepth 1 -maxdepth 1 ! -name \*.swp -name .\* -size -${maxsize}M -type f -readable | sed "s@$replies\/@@g" | sort -n); do
+		[[ "$showall" == "1" ]] && options+=("$hiddenfiles") && [[ "$yadfile" == "1" ]] && options+=(${yhidden[@]})
 	done
 	return 0
 }
@@ -427,7 +463,7 @@ selectfile() {
 	[[ -f $1 ]] && echo $1 && return 0
 	ifs "n"
 	options=()
-	tolistfunctions=('e' 'p' 'd' 'f')
+	tolistfunctions=('e' 'p' 'd' 'f' 'c' 'h')
 	for tolist in ${listord[@]}; do
 		for tolistfunction in ${tolistfunctions[@]}; do
 			[[ "$tolist" == "$tolistfunction" ]] && { $tolist || yerror "error" || exit $? ; }
@@ -499,7 +535,7 @@ showhelp() {
 	-B X
 		place selection menu at Bottom of screen menu
 		0 to disable, 1 to enable
-		note: needs $yadfile='0' or -l 1 to take effect
+		note: needs \$yadfile='0' or -l 1 to take effect
 		current default: $bottoms
 
 	-c X
@@ -523,8 +559,15 @@ showhelp() {
 	-e X
 		vErtical listing
 		0 to disable, 1 to enable
-		note: needs $yadfile='1' or -l 1 to take effect
+		note: needs \$yadfile='1' or -l 1 to take effect
 		current default: $vertlis
+
+	-E X
+		run eval
+		process templates using 'eval'. if disabled, only 'envsubst' is used
+		0 to disable, 1 to enable
+		note: envsubst won't run subshells (more secure) but you lose linebreaks
+		current default: $runeval
 
 	-f X
 		Focus the originally active window before pasting
@@ -534,6 +577,16 @@ showhelp() {
 
 	-h
 		Show this help message
+
+	-k X
+		Remove cheKpoints ('@' at the end of template files)
+		0 to disable, 1 to enable
+		current default: $checkpt
+
+	-l X
+		treat template as a Literal command
+		0 to disable, 1 to enable
+		current default: $literal
 
 	-m XX
 		Maximum file size to display (in megabytes)
@@ -546,12 +599,12 @@ showhelp() {
 		note: implies -r 0 (do not Restore original clipboard)
 		current default: $pasteit
 
-	-P 'command $1'
+	-P 'command \$1'
 		set the Paste command (for both terminal and regular windows)
-		yhe variable '$1' represents the tmpfile holding the processed data
+		yhe variable '\$1' represents the tmpfile holding the processed data
 		you will probably want to use single quotes and parse it using 'eval'
 		note: implies -p 1 (enable pasting)
-		example: -P 'eval cat $1'
+		example: -P 'eval cat \$1'
 
 	-r X
 		Restore original clipboard data after reply is processed/pasted
@@ -590,6 +643,12 @@ showhelp() {
 	-x
 		set x bit on process execution for debug
 
+	-X X
+		eXecute file directly
+		if the file is executable and this is enabled, execute the file directly instead calling 'bash <file>'
+		0 to disable, 1 to enable
+		current default: $execute
+
 	-y X
 		Yad file selection interface
 		Use 'yad' fancy dialogs for file selections instead 'dmenu'
@@ -620,6 +679,12 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
+	v0.0.8 - 2017-09-23
+		[+] config/front-matter var: 'literal' (treat template as a commnd line, do not substitute or run var or subshell)
+		[+] config/front-matter var: 'runeval' (use eval to substitute variables and run subshells)
+		[+] treat hidden subfolders (\"conf folders\") and hidden files differently (than regular folders and files)
+		[+] added \$execute config (-X parameter) to control if files are executed directly or through bash (former \$bashing config)
+
 	v0.0.7 - 2017-09-20
 		[*] -P now implies -p
 
@@ -630,9 +695,9 @@ vchanges() {
 	v0.0.5 - 2017-09-20
 		[*] improved logics (e.g.: skip clipboard restore when skip pasting and data is on clipboard)
 		[*] moved example scripts to a single folder to keep repository clean
-		[+] new method/options to list directories and files ($listord)
-		[*] PID detection when $focusit='0' (or -f 0)
-		[*] better $IFS management
+		[+] new method/options to list directories and files (\$listord)
+		[*] PID detection when \$focusit='0' (or -f 0)
+		[*] better \$IFS management
 
 	v0.0.4 - 2017-09-18
 		[*] fixed a problem with 'editor' not taking effect or affecting other fields under some circumstances
@@ -659,7 +724,7 @@ vchanges() {
 "
 }
 
-while getopts "a:b:c:Cd:D:e:f:hk:m:p:P:r:R:t:vVw:xy:Y:" opt; do
+while getopts "a:b:c:Cd:D:e:E:f:hk:l:m:p:P:r:R:t:vVw:xX:y:Y:" opt; do
 	case $opt in
 		a) showall="$OPTARG" ;;
 		b) cbackup="$OPTARG" ;;
@@ -669,9 +734,11 @@ while getopts "a:b:c:Cd:D:e:f:hk:m:p:P:r:R:t:vVw:xy:Y:" opt; do
 		d) deltemp="$OPTARG" ;;
 		D) deptest="$OPTARG" ;;
 		e) vertlis="$OPTARG" ;;
+		E) runeval="$OPTARG" ;;
 		f) focusit="$OPTARG" ;;
 		h) showhelp ; exit 0 ;;
 		k) checkpt="$OPTARG" ;;
+		l) literal="$OPTARG" ;;
 		m) maxsize="$OPTARG" ;;
 		p) pasteit="$OPTARG" ;;
 		P) pastepp "$OPTARG" ;;
@@ -682,6 +749,7 @@ while getopts "a:b:c:Cd:D:e:f:hk:m:p:P:r:R:t:vVw:xy:Y:" opt; do
 		V) vrelease ; exit 0 ;;
 		w) waitbit="$OPTARG" ;;
 		x) set -x ;;
+		X) execute="$OPTARG" ;;
 		y) yadfile="$OPTARG" ;;
 		Y) yadform="$OPTARG" ;;
 		*) showhelp ; exit 1 ;;
