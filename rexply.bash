@@ -197,8 +197,8 @@ yadform() {
 				ydata=$(echo $fmfield | cut -d : -f 2-)
 				ydata1=$(echo $ydata | cut -d : -f 1)
 				ydata2=$(echo $ydata | cut -d : -f 2-)
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|yes|1) ]] && yadform="1"
-				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|no|0) ]] && yadform="0"
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|yes|enable|1) ]] && yadform="1"
+				[[ "$ytype" == "editor" ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|no|disable|0) ]] && yadform="0"
 				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && literal="1"
 				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && literal="0"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && runeval="1"
@@ -230,8 +230,8 @@ yadform() {
 					declare -A dmenufields
 					case $ytype in
 						preview)
-							[[ "$ydata1" =~ (true|on|yes|enable|enabled|1) ]] && preview="1"
-							[[ "$ydata1" =~ (false|off|no|disable|disabled|0) ]] && preview="0"
+							[[ "$ydata1" =~ (true|on|yes|enable|1) ]] && preview="1"
+							[[ "$ydata1" =~ (false|off|no|disable|0) ]] && preview="0"
 							;;
 						num|numeric)
 							dmenufields[$ydata1]="$(echo "$ydata2" | cut -d '!' -f 1 | cut -d '#' -f 1)"
