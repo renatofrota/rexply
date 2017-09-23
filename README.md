@@ -162,11 +162,11 @@ They are **executed** (your homedir is the initial working directory when you st
 Please note:
 
 1. if the file is not executable, no matter the extension, it will be processed as a regular text/bashdown template.
-2. the files are executed through `bash` by default (`$bashing='1'`), like this: `bash <file>`
+2. the files are not executed direcly by default (`$execute='0'`), they are called through `bash`, like this: `bash <file>`.
 
 I recommend you add `#!/bin/bash` hashbang at the top of the file and use `.bash` or `.sh` extension so your text editors also know they are shell executable files.
 
-Note: if you disable `$bashing` or pass `-X 0` the file will be executed **direcly** (instead `bash <file>`), making reXply act as a truly and independent "launcher" for your applications/scripts.
+Note: if you enable `$execute` or pass `-X 1` the file will be executed **direcly** (instead `bash <file>`), making reXply act as a truly and independent "launcher" for your applications/scripts.
 
 ## More information
 
