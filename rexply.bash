@@ -163,12 +163,12 @@ bashdown() {
 		echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
 			[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line" | sed 's/"/\\"/g')\"")"
 			printf -- "$line$enter"
-		done || yerror "error bashing down the file contents" || exit $?
+		done || yerror "unable to process parsed data with eval" || exit $?
 	else
 		echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
 			[[ "$line" =~ '$' ]] && line="$(printf -- "%s" "$line")"
 			printf -- "%s" "$line$enter"
-		done || yerror "error bashing down the file contents" || exit $?
+		done || yerror "unable to print out literal template" || exit $?
 	fi
 	ifs "r"
 	return 0
@@ -182,7 +182,7 @@ log() {
 }
 
 yform() {
-	yad --form --title="reXply" --width="580" --borders="20" --undecorated --on-top --center --skip-taskbar --image='accessories-text-editor' --separator="|" --quoted-output --button="gtk-ok" $@ 2>>$logfile
+	yad --form --title="reXply" --width="580" --borders="20" --undecorated --on-top --center --skip-taskbar --image='accessories-text-editor' --separator="|" --button="gtk-ok" $@ 2>>$logfile
 }
 
 yadform() {
@@ -261,11 +261,11 @@ yadform() {
 		for dfields in "${dmfieldlist[@]}"; do
 			if [[ "$preview" == "1" ]]; then
 				[[ "$vertlis" -lt ${#dmfieldlist[@]} ]] && vertlis=$((${#dmfieldlist[@]}+7))
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && echo ${dmenufields[$dfields]} || echo "\${$dfields}" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == $dfieldsstep ]] && echo -en ">>> "; echo "[ $dfieldsstep ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply" )
+				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && echo ${dmenufields[$dfields]} || echo "\${$dfields}" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == $dfieldsstep ]] && echo -en ">>> "; echo "[ $dfieldsstep ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
 			else
-				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && echo ${dmenufields[$dfields]} || echo "\${$dfields}" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]:" )
+				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && echo ${dmenufields[$dfields]} || echo "\${$dfields}" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
 			fi
-			[[ ! -z "$value" ]] && dmenufields[$dfields]=$value && export ${dfields}=$value || log "Error: aborted" || exit $?
+			[[ ! -z "$value" ]] && dmenufields[$dfields]="$value" && export ${dfields}="$value" || log "Error: aborted" || exit $?
 		done
 	fi
 	ifs "r"
@@ -470,7 +470,7 @@ selectfile() {
 	tolistfunctions=('e' 'p' 'd' 'f' 'c' 'h')
 	for tolist in ${listord[@]}; do
 		for tolistfunction in ${tolistfunctions[@]}; do
-			[[ "$tolist" == "$tolistfunction" ]] && { $tolist || yerror "error" || exit $? ; }
+			[[ "$tolist" == "$tolistfunction" ]] && { $tolist || yerror "unable to process list of files" || exit $? ; }
 		done
 	done
 	if [[ "$yadfile" == "1" ]]; then
