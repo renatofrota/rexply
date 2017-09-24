@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.0.8"
-revision="e"
+revision="f"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -69,8 +69,8 @@ yadform='0' # use yad to process form filling dialogs - when templates have fron
 maxsize='3' # file selection will only show files up to X MB
 # you can still pass a bigger file via -R or 1st non-opt arg
 showall='0' # show hidden directories and files (be careful)
-listord=('e' 'p' 'd' 'f' 'c' 'h') # choose the display order
-# empty, parent, subdir, file, confdir, hidden (e/p/d/f/c/h)
+listord=('e' 'p' 's' 'f' 'c' 'h') # list order (e/p/s/f/c/h)
+# empty line, parent, subdirs, files, confdirs, hidden files
 execute='1' # if enabled files with +x permission are called
 # directly, otherwise, are called through bash (bash <file>)
 checkpt='1' # use '@' to mark the end of a template file and
@@ -144,18 +144,18 @@ configfile="$rexplydir/rexply.cfg"
 # @param string - string with bash(down) syntax (usually surrounded by ' quotes instead of ")
 bashdown() {
 	txt="$(cat -)";
-	lines="$(cat "$filename" | wc -l)" || yerror "unable to read file: $filename" || exit $?
+	lines="$(cat "$1" | wc -l)" || yerror "unable to read file: $1" || exit $?
 	if [[ $lines -le 1 ]]; then
 		enter=""
 		[[ "$literal" == "2" ]] && literal="1"
 	else
 		enter="\n"
-		header=$(cat "$filename" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
+		header=$(cat "$1" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
 		if [[ ! -z $header ]]; then
 			literal="0"
 			runeval="1"
 			yadform "${header}" || yerror "unable to process headers" || exit $?
-			txt="$(awk "/^---$/{i++}i>=2{print}" "$filename" | tail -n +2)" || yerror "unable to strip headers from file: $filename" || exit $?
+			txt="$(awk "/^---$/{i++}i>=2{print}" "$1" | tail -n +2)" || yerror "unable to strip headers from file: $1" || exit $?
 		fi
 	fi
 	ifs "e"
@@ -401,7 +401,7 @@ run() {
 		if [[ -x "$filename" ]]; then
 			${bashing} "$filename" &> $tmpfile || yerror "unable to write $filename execution output to tmpfile: $tmpfile" || exit $?
 		else
-			content="$(cat "$filename" | bashdown)"
+			content="$(cat "$filename" | bashdown "$filename")"
 			[[ $? != 0 ]] && { yerror "unable to save bashdown content into a shell var" || exit $? ; }
 			if [[ "${#content}" == 0 ]]; then
 				printf "$filename" > $tmpfile || yerror "unable to write $filename contents to tmpfile: $tmpfile" || exit $?
@@ -436,7 +436,7 @@ p() {
 	return 0
 }
 
-d() {
+s() {
 	for subdirs in $(find -L $replies -mindepth 1 -maxdepth 1 ! -name .\* -type d -readable | sed "s@$replies@@g" | sort -n); do
 		[[ "$subdirs" != "/."* ]] || [[ "$showall" == "1" ]] && options+=("$subdirs") && [[ "$yadfile" == "1" ]] && options+=(${yfolder[@]})
 	done
@@ -468,7 +468,7 @@ selectfile() {
 	[[ -f $1 ]] && echo $1 && return 0
 	ifs "n"
 	options=()
-	tolistfunctions=('e' 'p' 'd' 'f' 'c' 'h')
+	tolistfunctions=('e' 'p' 's' 'f' 'c' 'h')
 	for tolist in ${listord[@]}; do
 		for tolistfunction in ${tolistfunctions[@]}; do
 			[[ "$tolist" == "$tolistfunction" ]] && { $tolist || yerror "unable to process list of files" || exit $? ; }

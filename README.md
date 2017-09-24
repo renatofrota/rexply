@@ -148,16 +148,18 @@ this line is not a comment but parsing will fail: 'this' is not a valid variable
 #### Front-matter tips:
 
 1. you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
-2. the preview lines (those displayed below `dmenu` when both `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
+2. the preview lines (those displayed below `dmenu` when `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
   - disable preview specifically for that template, by adding `preview:false` to it's front-matter;
   - use less-common words as variable names (or just combine words like `customer_name`);
   - change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
   - prepend all them with a _prefix__ (e.g.: `field:field_customer:Customer`), making the variable names still _readable_ but much less likely (near impossible) to match your input data;
-  - make the variable name all uppercase;
+  - make the variables' names all uppercase;
 
 ### Bash scripts
 
-They are **executed** (your homedir is the initial working directory when you start reXply using a keybinding) when selected in the menu (**be careful!**) and you have execution permissions over the file (`chmod +x path/to/filename.bash`).
+They are **executed** when selected in the menu and you have execution permissions over the file (`chmod +x path/to/filename.bash`).
+
+Be careful. Your homedir is the initial working directory when you start reXply using a keybinding. When running from command line, the working dir is kept. 
 
 Please note:
 
