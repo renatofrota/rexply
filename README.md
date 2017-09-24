@@ -117,7 +117,9 @@ Currently, 3 types of data variables are supported
 
 #### Front-matter overrides variables
 
-4 special front-matter variables can be used to override reXply options (they accept `1`/`0`, like the config vars, and `true`/`false`, `yes`/`no` and other alises - specifically as front-matter overrides):
+4 special front-matter variables can be used to override reXply options.
+
+They accept `1`/`0`, like the config vars, or aliases like `true`/`false`, `yes`/`no`, etc).
 
 1. `yadform` or `editor` (overrides `$yadform`)
 2. `preview`
