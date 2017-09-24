@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.0.8"
-revision="d"
+revision="e"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -204,7 +204,7 @@ yadform() {
 				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && literal="0"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && runeval="1"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && runeval="0"
-				[[ "$ytype" != "preview" ]] && [[ $ytype != "editor" ]] && [[ $ytype != "yadform" ]] && [[ $ytype != "literal" ]] && [[ $ytype != "runeval" ]] && {
+				[[ ! "$ytype" =~ (preview|editor|yadform|literal|runeval) ]] && {
 					[[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1")
 				}
 				if [[ "$yadform" == "1" ]]; then
