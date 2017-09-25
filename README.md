@@ -34,22 +34,15 @@ The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`.
 
 The files can be:
 
-- regular text files
-- "bashdown" files (to be run using `eval`)
+- text files
 - front-matter powered templates
-- bash scripts (or any other binary/executable script/application - if you change a setting in reXply config)
+- "bashdown" files (enabling `$runeval`)
+- bash scripts (executable scripts - prerably with `#!/bin/bash` hashbang)
+- or any other binary/executable script/application (after enabling `$execute`)
 
-### Regular text files
+### Text files
 
 No secrets on this. I just recommend you append .txt to the file names so your editors do not try to apply syntax highlighting based on file contents.
-
-### Bashdown files
-
-You can add bash subshells `$()` on your file. These will be executed (**with your homedir as their initial working directory**) and their output will replace the subshell dynamically in the template (just like as any command you run in your shell).
-
-Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_
-
-Note: some consider eval dangerous (have you ever heard _eval is evil_?) so an alternative exists: substitute environment vars using just `envsubst` - the downside is you lose ability to add line breaks (they are replaced by `\n` for the moment - I am looking after alternatives) - if you want to go this way, disable eval by setting `$runeval='0'`, passing `-E 0` parameter, or add `runeval:false` to template).
 
 ### Front-matter powered templates
 
@@ -155,20 +148,27 @@ this line is not a comment but parsing will fail: 'this' is not a valid variable
   - prepend all them with a _prefix__ (e.g.: `field:field_customer:Customer`), making the variable names still _readable_ but much less likely (near impossible) to match your input data;
   - make the variables' names all uppercase;
 
+### Bashdown files
+
+You can add bash subshells `$()` on your file. These will be executed (**with your homedir as their initial working directory**) and their output will replace the subshell dynamically in the template (just like as any command you run in your shell).
+
+Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_
+
+Note: some consider eval dangerous (have you ever heard _eval is evil_?) so environment vars substitutions is made using just `envsubst` by default - if you want to go evil way, I mean.. eval way, enable eval by setting `$runeval='1'`, passing `-E 1` parameter, or add `runeval:true` to template).
+
 ### Bash scripts
 
 They are **executed** when selected in the menu and you have execution permissions over the file (`chmod +x path/to/filename.bash`).
 
-Be careful. Your homedir is the initial working directory when you start reXply using a keybinding. When running from command line, the working dir is kept. 
+Be careful. Your homedir is the initial working directory when you start reXply using a keybinding. When running from command line, the working dir is kept.
 
 Please note:
 
 1. if the file is not executable, no matter the extension, it will be processed as a regular text/bashdown template.
 2. the files are not executed direcly by default (`$execute='0'`), they are called through `bash`, like this: `bash <file>`.
+3. If you enable `$execute` or pass `-X 1` the file will be executed **direcly**, making reXply act as a truly and independent "launcher" for your applications/scripts.
 
-I recommend you add `#!/bin/bash` hashbang at the top of the file and use `.bash` or `.sh` extension so your text editors also know they are shell executable files.
-
-Note: if you enable `$execute` or pass `-X 1` the file will be executed **direcly** (instead `bash <file>`), making reXply act as a truly and independent "launcher" for your applications/scripts.
+I recommend you add `#!/bin/bash` hashbang at the top of the file and use `.bash` or `.sh` extension so your text editors also know they are shell executable files - and they keep being properly executed if you enable `$execute`.
 
 ## More information
 

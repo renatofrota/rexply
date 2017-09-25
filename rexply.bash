@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.0.8"
-revision="f"
+version="0.0.9"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -78,7 +78,7 @@ checkpt='1' # use '@' to mark the end of a template file and
 literal="2" # treat templates as literal commands by default
 # if template has a front-matter it's disabled automatically
 # '2' is a special case: consider only one-liners as literal
-runeval="1" # substitute environment vars using eval command
+runeval="0" # substitute environment vars using eval command
 # if disabled envsubst is used (+secure, but strip newlines)
 # if template has a front-matter it is enabled automatically
 timeout='10' # the timeout for each directory/file selection
@@ -153,23 +153,19 @@ bashdown() {
 		header=$(cat "$1" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
 		if [[ ! -z $header ]]; then
 			literal="0"
-			runeval="1"
 			yadform "${header}" || yerror "unable to process headers" || exit $?
 			txt="$(awk "/^---$/{i++}i>=2{print}" "$1" | tail -n +2)" || yerror "unable to strip headers from file: $1" || exit $?
 		fi
 	fi
 	ifs "e"
-	[[ "$literal" == "1" ]] && enter="" || { [[ "$runeval" == "0" ]] && { txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $? ; } }
+	[[ "$literal" != "1" ]] && { [[ "$runeval" == "0" ]] && { txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $? ; } }
 	if [[ "$literal" != '1' ]] && [[ "$runeval" != "0" ]]; then
 		echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
 			[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line" | sed 's/"/\\"/g')\"")"
 			printf -- "$line$enter"
 		done || yerror "unable to process parsed data with eval" || exit $?
 	else
-		echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
-			[[ "$line" =~ '$' ]] && line="$(printf -- "%s" "$line")"
-			printf -- "%s" "$line$enter"
-		done || yerror "unable to print out literal template" || exit $?
+		echo "$txt" || yerror "unable to print out literal template" || exit $?
 	fi
 	ifs "r"
 	return 0
@@ -190,7 +186,7 @@ yadform() {
 	ifs "n"
 	yadfields=()
 	dmenufields=()
-	types=('literal' 'runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text')
+	types=('literal' 'runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text' 'combo' 'combobox' 'select' 'selectbox')
 	for fmfield in $@; do
 		ytype=$(echo $fmfield | cut -d : -f 1 | tr '[:upper:]' '[:lower:]')
 		for type in "${types[@]}"; do
@@ -221,6 +217,16 @@ yadform() {
 							;;
 						field|var|entry|text)
 							yadfields+=("--field=$ydata1")
+							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
+							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							;;
+						select|selectbox)
+							yadfields+=("--field=$ydata1:CB")
+							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
+							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							;;
+						combo|combobox)
+							yadfields+=("--field=$ydata1:CBE")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
 							;;
@@ -683,6 +689,11 @@ vchanges() {
 	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
 
 	https://github.com/renatofrota/rexply
+
+	v0.0.9 - 2017-09-24
+		[+] new front-matter variable type: 'select' or 'selectbox' (a selectbox with pre-defined values) - only works with Yad for now
+		[+] new front-matter variable type: 'combo' or 'combobox' (an editable selectbox with pre-defined values) - only works with Yad for now
+		[*] literal templates and \$runeval=0 now respect newlines! -- \$runeval is now 0 by default :)
 
 	v0.0.8 - 2017-09-23
 		[+] config/front-matter var: 'literal' (treat template as a commnd line, do not substitute or run var or subshell)

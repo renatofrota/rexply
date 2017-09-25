@@ -15,3 +15,4 @@ To resolve this problem I've added this code to [b]public_html/.htaccess[/b] fil
 
 This change should reflect in aproximately ${minutes} minutes.
 
+@
