@@ -1,6 +1,6 @@
 #!/bin/bash
 # reXply
-version="0.0.9"
+version="0.1.0"
 revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
@@ -75,12 +75,11 @@ execute='1' # if enabled files with +x permission are called
 # directly, otherwise, are called through bash (bash <file>)
 checkpt='1' # use '@' to mark the end of a template file and
 # strip it after processing (or blank lines will be removed)
-literal="2" # treat templates as literal commands by default
+literal="1" # treat templates as literal commands by default
 # if template has a front-matter it's disabled automatically
 # '2' is a special case: consider only one-liners as literal
 runeval="0" # substitute environment vars using eval command
 # if disabled envsubst is used (+secure, but strip newlines)
-# if template has a front-matter it is enabled automatically
 timeout='10' # the timeout for each directory/file selection
 # the timeout is valid only for 'yad' file selection dialogs
 
@@ -179,7 +178,7 @@ log() {
 }
 
 yform() {
-	yad --form --title="reXply" --width="580" --borders="20" --undecorated --on-top --center --skip-taskbar --image='accessories-text-editor' --separator="|" --button="gtk-ok" $@ 2>>$logfile
+	yad --form --title="reXply" --width="580" --borders="20" --on-top --center --skip-taskbar --image='accessories-text-editor' --separator="|" --button="gtk-ok" $@ 2>>$logfile
 }
 
 yadform() {
@@ -243,7 +242,7 @@ yadform() {
 						num|numeric)
 							dmenufields[$ydata1]="$(echo "$ydata2" | cut -d '!' -f 1 | cut -d '#' -f 1)"
 							;;
-						field|var|entry|text|txt|textarea)
+						field|var|entry|text|txt|textarea|select|selectbox|combo|combobox)
 							dmenufields[$ydata1]="$(echo "$ydata2" | cut -d '#' -f 1)"
 							;;
 						*)
@@ -268,9 +267,9 @@ yadform() {
 		for dfields in "${dmfieldlist[@]}"; do
 			if [[ "$preview" == "1" ]]; then
 				[[ "$vertlis" -lt ${#dmfieldlist[@]} ]] && vertlis=$((${#dmfieldlist[@]}+7))
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && echo ${dmenufields[$dfields]} || echo "\${$dfields}" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == $dfieldsstep ]] && echo -en ">>> "; echo "[ $dfieldsstep ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
+				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == $dfieldsstep ]] && echo -en ">>> "; echo "[ $dfieldsstep ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
 			else
-				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && echo ${dmenufields[$dfields]} || echo "\${$dfields}" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
+				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
 			fi
 			[[ ! -z "$value" ]] && dmenufields[$dfields]="$value" && export ${dfields}="$value" || log "Error: aborted" || exit $?
 		done
@@ -690,6 +689,10 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
+	v0.1.0 - 2017-09-24
+		[+] added support to front-matter variables select, selectbox, combo, combobox in dmenu
+		[*] now literal templates supports newlines, \$literal defaults to 1 again
+
 	v0.0.9 - 2017-09-24
 		[+] new front-matter variable type: 'select' or 'selectbox' (a selectbox with pre-defined values) - only works with Yad for now
 		[+] new front-matter variable type: 'combo' or 'combobox' (an editable selectbox with pre-defined values) - only works with Yad for now
@@ -778,6 +781,7 @@ shift $((OPTIND-1));
 IFS_OLD=$IFS
 
 ifs() {
+	[[ "$1" == "!" ]] && IFS='!' && return 0
 	[[ "$1" == "e" ]] && IFS='' && return 0
 	[[ "$1" == "n" ]] && IFS=$'\n' && return 0
 	[[ "$1" == "p" ]] && IFS=$'|' && return 0

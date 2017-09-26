@@ -86,14 +86,16 @@ Oh, and the @ at the end is to confirm you want the 2 blank lines processed (any
 The syntax for a front-matter variable of type `field` accepts the 3 following formats:
 
 1. `field:customer` - the default value will be `customer`, i.e.: the variable name
-2. `field:customer:` - defaults to a literal `${varname}`, i.e.: the 'placeholder' var stay as is
+2. `field:customer:` - defaults to `${varname}`, i.e.: submitting with no change, the 'placeholder' var stays in template
 3. `field:customer:Customer` - defaults to 'Customer'
 
 #### Data variables types
 
-Currently, 3 types of data variables are supported
+Currently, 5 types of data variables are supported
 
 1. `field`, `var`,  `text` or `entry` - single line input field
+2. `select` or `selectbox` - a field with a list of pre-defined values displayed as a selectbox item
+2. `combo` or `combobox` - like select field, but allows a custom value to be entered
 2. `txt` or `textarea` - multiline (textarea) input field
 3. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
    - a default is specified as usual: `num:minutes:10`
