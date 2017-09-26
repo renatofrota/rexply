@@ -95,9 +95,9 @@ Currently, 5 types of data variables are supported
 
 1. `field`, `var`,  `text` or `entry` - single line input field
 2. `select` or `selectbox` - a field with a list of pre-defined values displayed as a selectbox item
-2. `combo` or `combobox` - like select field, but allows a custom value to be entered
-2. `txt` or `textarea` - multiline (textarea) input field
-3. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
+3. `combo` or `combobox` - like select field, but allows a custom value to be entered
+4. `txt` or `textarea` - multiline (textarea) input field
+5. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
    - a default is specified as usual: `num:minutes:10`
    - an accepted range is specific by appending `!MIN..MAX` (e.g.: `num:minutes:10!0..20`)
    - the stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
