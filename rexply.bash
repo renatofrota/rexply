@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.0"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -64,7 +64,7 @@ yfnames=('green' 'white')
 yhidden=('gray' 'white')
 
 yadfile='0' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
-yadform='0' # use yad to process form filling dialogs - when templates have front-matter variables
+yadform='0' # use yad to process forms when template have front-matter variables and error dialogs
 
 maxsize='3' # file selection will only show files up to X MB
 # you can still pass a bigger file via -R or 1st non-opt arg
@@ -106,6 +106,14 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 # all these settings can be overwritten by an additional configuration file at reply-data/.cfg/cfg
 
 # THAT'S IT, STOP EDITING!
+
+
+
+
+
+
+
+
 
 
 
@@ -279,11 +287,11 @@ yadform() {
 
 yerror() {
 	local yexit=$?
-	log "Error: $@"
+	log "Error: $@ ($yexit)"
 	if [[ "$yadform" == "1" ]]; then
-		yad --image "dialog-error" --width="180" --title="reXply failed" --text="Error: $@"
+		yad --image "dialog-error" --width="180" --title="reXply failed" --text="Error: $@ ($yexit)"
 	else
-		echo -e "\nError: $@\n\n" | dmenu -b -nf white -nb red -sf white -sb red -l 10 -p "reXply"
+		echo -e "\nError: $@ ($yexit)\n\n" | dmenu -b -nf white -nb red -sf white -sb red -l 10 -p "reXply"
 	fi
 	backwindow
 	return $yexit
@@ -374,9 +382,10 @@ init() {
 					fi
 				else
 					sudo=$(which pkexec || which gksudo || which kdesudo)
+					sudo=$(which apt || which apt-get || which dnf || which yum)
 					[[ ! -z $sudo ]] || log "Error: can't determine correct pkexec/gksudo/kdesudo equivalent, please install '$app' manually" || exit $?
 					yask "install the required utility: '$app' ?"
-					[[ $? == 0 ]] && $sudo apt install $app
+					[[ $? == 0 ]] && $sudo $apt install $app
 					[[ $? != 0 ]] && { echo "Error: dependency not met ($app)" >&2 ; exit 1 ; }
 				fi
 			}
@@ -407,11 +416,11 @@ run() {
 			${bashing} "$filename" &> $tmpfile || yerror "unable to write $filename execution output to tmpfile: $tmpfile" || exit $?
 		else
 			content="$(cat "$filename" | bashdown "$filename")"
-			[[ $? != 0 ]] && { yerror "unable to save bashdown content into a shell var" || exit $? ; }
+			[[ $? == 0 ]] || yerror "output of front-matter/bashdown template evaluation is empty - process aborted or failed" || exit $?
 			if [[ "${#content}" == 0 ]]; then
-				printf "$filename" > $tmpfile || yerror "unable to write $filename contents to tmpfile: $tmpfile" || exit $?
+				printf "$filename evaluated empty" > $tmpfile && yerror "output of $filename evaluation is empty" && exit 1
 			else
-				printf "%s" "$content" > $tmpfile || yerror "unable to write 'bashdown' output of $filename to tmpfile: $tmpfile" || exit $?
+				printf "%s" "$content" > $tmpfile || yerror "unable to write evaluation of $filename to tmpfile: $tmpfile" || exit $?
 			fi
 		fi
 		[[ "$checkpt" == "1" ]] && checkpt $tmpfile || yerror "unable to remove the placeholder char at end of $tmpfile" || exit $?
@@ -692,6 +701,8 @@ vchanges() {
 	v0.1.0 - 2017-09-24
 		[+] added support to front-matter variables select, selectbox, combo, combobox in dmenu
 		[*] now literal templates supports newlines, \$literal defaults to 1 again
+		[*] added apt-get, dnf, yum as possible commands to install dependencies (rev.b)
+		[*] improved script abortion/failures related logics and logs (rev.b)
 
 	v0.0.9 - 2017-09-24
 		[+] new front-matter variable type: 'select' or 'selectbox' (a selectbox with pre-defined values) - only works with Yad for now
