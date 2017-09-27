@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.1.0"
-revision="b"
+version="0.1.1"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -40,7 +40,7 @@ waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/sc
 
 bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
 vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
-preview='1' # display a "live preview" of front-matter bashdown variables bellow dmenu input field
+preview='1' # display a "live preview" of front-matter fields to-be/processed, bellow dmenu inputs
 # note: the preview lines are "filtered" as you type and will eventually disappear: once the input
 # text do not match any of them! If it is a problem (you often ends up selecting an existing item)
 # you can add a field 'preview:false' to disable field preview for a particular file. the same way
@@ -75,9 +75,6 @@ execute='1' # if enabled files with +x permission are called
 # directly, otherwise, are called through bash (bash <file>)
 checkpt='1' # use '@' to mark the end of a template file and
 # strip it after processing (or blank lines will be removed)
-literal="1" # treat templates as literal commands by default
-# if template has a front-matter it's disabled automatically
-# '2' is a special case: consider only one-liners as literal
 runeval="0" # substitute environment vars using eval command
 # if disabled envsubst is used (+secure, but strip newlines)
 timeout='10' # the timeout for each directory/file selection
@@ -117,16 +114,6 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 
 
 
-
-
-
-
-
-
-
-
-
-
 # INTERNAL SETUP
 run=$(basename ${BASH_SOURCE[0]});
 realpath="${BASH_SOURCE[0]}";
@@ -144,17 +131,12 @@ replies="$rexplydir/rexply-data/repository"
 configfile="$rexplydir/rexply.cfg"
 [[ -f "$configfile" ]] && source $configfile
 
-# @link http://github.com/coderofsalvation/bashdown
-# @dependencies: sed cat
-# @example: echo 'hi $USER it is $(date)' | bashdown
-# fetches a document and interprets bashsyntax in string (bashdown) templates
-# @param string - string with bash(down) syntax (usually surrounded by ' quotes instead of ")
-bashdown() {
+process() {
 	txt="$(cat -)";
+	literal="1"
 	lines="$(cat "$1" | wc -l)" || yerror "unable to read file: $1" || exit $?
 	if [[ $lines -le 1 ]]; then
 		enter=""
-		[[ "$literal" == "2" ]] && literal="1"
 	else
 		enter="\n"
 		header=$(cat "$1" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
@@ -165,12 +147,16 @@ bashdown() {
 		fi
 	fi
 	ifs "e"
-	[[ "$literal" != "1" ]] && { [[ "$runeval" == "0" ]] && { txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $? ; } }
-	if [[ "$literal" != '1' ]] && [[ "$runeval" != "0" ]]; then
-		echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
-			[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line" | sed 's/"/\\"/g')\"")"
-			printf -- "$line$enter"
-		done || yerror "unable to process parsed data with eval" || exit $?
+	if [[ "$literal" != "1" ]]; then
+		txt=$(echo "$txt" | sed -e 's,\${\([^}]*\)},${rexply_\1},g')
+		if [[ "$runeval" != "1" ]]; then
+			txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $?
+		else
+			echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
+				[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line")\"")"
+				printf -- "$line$enter"
+			done || yerror "unable to process parsed data with eval" || exit $?
+		fi
 	else
 		echo "$txt" || yerror "unable to print out literal template" || exit $?
 	fi
@@ -193,7 +179,7 @@ yadform() {
 	ifs "n"
 	yadfields=()
 	dmenufields=()
-	types=('literal' 'runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text' 'combo' 'combobox' 'select' 'selectbox')
+	types=('runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text' 'combo' 'combobox' 'select' 'selectbox')
 	for fmfield in $@; do
 		ytype=$(echo $fmfield | cut -d : -f 1 | tr '[:upper:]' '[:lower:]')
 		for type in "${types[@]}"; do
@@ -201,39 +187,39 @@ yadform() {
 				ydata=$(echo $fmfield | cut -d : -f 2-)
 				ydata1=$(echo $ydata | cut -d : -f 1)
 				ydata2=$(echo $ydata | cut -d : -f 2-)
+				ydatat=$(echo $ydata1 | cut -d '!' -f 2-)
+				ydata1=$(echo $ydata1 | cut -d '!' -f 1)
 				[[ "$ytype" =~ (editor|yadform) ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|yes|enable|1) ]] && yadform="1"
 				[[ "$ytype" =~ (editor|yadform) ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|no|disable|0) ]] && yadform="0"
-				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && literal="1"
-				[[ "$ytype" == "literal" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && literal="0"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && runeval="1"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && runeval="0"
-				[[ ! "$ytype" =~ (preview|editor|yadform|literal|runeval) ]] && {
+				[[ ! "$ytype" =~ (preview|editor|yadform|runeval) ]] && {
 					[[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1")
 				}
 				if [[ "$yadform" == "1" ]]; then
 					case $ytype in
 						num|numeric)
-							yadfields+=("--field=$ydata1:NUM")
+							yadfields+=("--field=$ydatat:NUM")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
 							;;
 						txt|textarea)
-							yadfields+=("--field=$ydata1:TXT")
-							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
+							yadfields+=("--field=$ydatat:TXT")
+							getvalue="$(echo "$ydata2" | cut -d '#' -f 1 | cut -d '!' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
 							;;
 						field|var|entry|text)
-							yadfields+=("--field=$ydata1")
-							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
+							yadfields+=("--field=$ydatat")
+							getvalue="$(echo "$ydata2" | cut -d '#' -f 1 | cut -d '!' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
 							;;
 						select|selectbox)
-							yadfields+=("--field=$ydata1:CB")
+							yadfields+=("--field=$ydatat:CB")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
 							;;
 						combo|combobox)
-							yadfields+=("--field=$ydata1:CBE")
+							yadfields+=("--field=$ydatat:CBE")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
 							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
 							;;
@@ -242,6 +228,7 @@ yadform() {
 					esac
 				else
 					declare -A dmenufields
+					declare -A dmenutitles
 					case $ytype in
 						preview)
 							[[ "$ydata1" =~ (true|on|yes|enable|1) ]] && preview="1"
@@ -249,9 +236,11 @@ yadform() {
 							;;
 						num|numeric)
 							dmenufields[$ydata1]="$(echo "$ydata2" | cut -d '!' -f 1 | cut -d '#' -f 1)"
+							dmenutitles[$ydata1]="$(echo "$ydatat")"
 							;;
 						field|var|entry|text|txt|textarea|select|selectbox|combo|combobox)
 							dmenufields[$ydata1]="$(echo "$ydata2" | cut -d '#' -f 1)"
+							dmenutitles[$ydata1]="$(echo "$ydatat")"
 							;;
 						*)
 							;;
@@ -269,17 +258,17 @@ yadform() {
 		for yfields in ${yfieldlist[@]}; do
 			value=$(echo -e "${yform[$yfieldsstep]}")
 			yfieldsstep=$((yfieldsstep+1))
-			export ${yfields}="$value"
+			export rexply_${yfields}="$(echo $value | sed 's.,000000..')"
 		done
 	else
 		for dfields in "${dmfieldlist[@]}"; do
 			if [[ "$preview" == "1" ]]; then
 				[[ "$vertlis" -lt ${#dmfieldlist[@]} ]] && vertlis=$((${#dmfieldlist[@]}+7))
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == $dfieldsstep ]] && echo -en ">>> "; echo "[ $dfieldsstep ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
+				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && echo -en ">>> "; echo "[ ${dmenutitles[$dfieldsstep]} ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" )
 			else
-				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ $dfields ]" )
+				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" )
 			fi
-			[[ ! -z "$value" ]] && dmenufields[$dfields]="$value" && export ${dfields}="$value" || log "Error: aborted" || exit $?
+			[[ ! -z "$value" ]] && dmenufields[$dfields]="$value" && export rexply_${dfields}="$value" || log "Error: aborted" || exit $?
 		done
 	fi
 	ifs "r"
@@ -415,8 +404,8 @@ run() {
 		if [[ -x "$filename" ]]; then
 			${bashing} "$filename" &> $tmpfile || yerror "unable to write $filename execution output to tmpfile: $tmpfile" || exit $?
 		else
-			content="$(cat "$filename" | bashdown "$filename")"
-			[[ $? == 0 ]] || yerror "output of front-matter/bashdown template evaluation is empty - process aborted or failed" || exit $?
+			content="$(cat "$filename" | process "$filename")"
+			[[ $? == 0 ]] || yerror "output of template processing is empty - process aborted or failed" || exit $?
 			if [[ "${#content}" == 0 ]]; then
 				printf "$filename evaluated empty" > $tmpfile && yerror "output of $filename evaluation is empty" && exit 1
 			else
@@ -532,9 +521,10 @@ pastepp() {
 	pasteterminal="$1"
 }
 
+head="reXply is a handy tool to copy/paste replies and scripts with an advanced front-matter system for variables substitutions and dynamic per-template settings, bash script processing/evaluation, and much more, that can also be used as a launcher to other scripts/executables!"
 showhelp() {
 	echo "
-	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
+	$head
 
 	https://github.com/renatofrota/rexply
 
@@ -601,11 +591,6 @@ showhelp() {
 		Remove cheKpoints ('@' at the end of template files)
 		0 to disable, 1 to enable
 		current default: $checkpt
-
-	-l X
-		treat template as a Literal command
-		0 to disable, 1 to enable, 2 enable on one-liners
-		current default: $literal
 
 	-m XX
 		Maximum file size to display (in megabytes)
@@ -694,15 +679,21 @@ vrelease() {
 
 vchanges() {
 	echo "
-	reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
+	$head
 
 	https://github.com/renatofrota/rexply
+
+	v0.1.1 - 2017-09-28
+		[*] improved templates evaluation
+		[*] added a prefix to front-matter variables during processing to avoid conflicts with internal and environment vars
+		[*] removed \$literal setting - any template with no front-matter is considered text-only and pasted as-is
 
 	v0.1.0 - 2017-09-24
 		[+] added support to front-matter variables select, selectbox, combo, combobox in dmenu
 		[*] now literal templates supports newlines, \$literal defaults to 1 again
 		[*] added apt-get, dnf, yum as possible commands to install dependencies (rev.b)
 		[*] improved script abortion/failures related logics and logs (rev.b)
+		[+] added support to field titles (rev.c)
 
 	v0.0.9 - 2017-09-24
 		[+] new front-matter variable type: 'select' or 'selectbox' (a selectbox with pre-defined values) - only works with Yad for now
@@ -756,7 +747,7 @@ vchanges() {
 "
 }
 
-while getopts "a:b:c:Cd:D:e:E:f:hk:l:m:p:P:r:R:t:vVw:xX:y:Y:" opt; do
+while getopts "a:b:c:Cd:D:e:E:f:hk:m:p:P:r:R:t:vVw:xX:y:Y:" opt; do
 	case $opt in
 		a) showall="$OPTARG" ;;
 		b) cbackup="$OPTARG" ;;
@@ -770,7 +761,6 @@ while getopts "a:b:c:Cd:D:e:E:f:hk:l:m:p:P:r:R:t:vVw:xX:y:Y:" opt; do
 		f) focusit="$OPTARG" ;;
 		h) showhelp ; exit 0 ;;
 		k) checkpt="$OPTARG" ;;
-		l) literal="$OPTARG" ;;
 		m) maxsize="$OPTARG" ;;
 		p) pasteit="$OPTARG" ;;
 		P) pastepp "$OPTARG" ;;

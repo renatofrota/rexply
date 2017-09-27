@@ -1,5 +1,5 @@
 # reXply
-reXply - A handy tool to copy/paste replies and scripts from a 'repository', with advanced 'headers' system, inline substitutions, bashdown, bash script processing - also used as a 'launcher' to other scripts/executables!
+reXply is a handy tool to copy/paste replies and scripts with an advanced front-matter system for variables substitutions and dynamic per-template settings, bash script processing/evaluation, and much more, that can also be used as a launcher to other scripts/executables!
 
 ## Dependencies
 
@@ -36,8 +36,8 @@ The files can be:
 
 - text files
 - front-matter powered templates
-- "bashdown" files (enabling `$runeval`)
-- bash scripts (executable scripts - prerably with `#!/bin/bash` hashbang)
+- "evaluated" (processed with `eval`)
+- bash scripts (executable scripts - preferably with `#!/bin/bash` hashbang)
 - or any other binary/executable script/application (after enabling `$execute`)
 
 ### Text files
@@ -50,9 +50,12 @@ Create a section with some variables at the top of the file (surround the variab
 
 ```
 ---
-field:customer:Customer
-txt:code
-num:minutes:10!0..20!5
+#vartype:varname
+#vartype:varname!Field Label:default value
+#field label and default value are optional
+entry:customer!Customer name:
+txt:code!Code used to fix
+num:minutes!Time to take effect (in minutes):10!0..20!5
 ---
 Hello ${customer},
 
@@ -73,7 +76,7 @@ When inserting this template, reXply will ask you to provide the data to the 3 v
 - the _code_ you've used to resolve his problem
 - how many minutes it will take to reflect on his end
 
-After the variable name, you can add `:` and the default input for that variable.
+After the variable name, you can add `:` and the default input for that variable. When no default is provided, variable name will be the default. When default is empty (`:` and nothing in front of it), the default will be `${variable}`.
 
 If using `dmenu`, you will see an empty field with a 'selection' below (the default input). You can type any value or just hit enter to use the pre-selected option. One field at a time. Optionally, a preview of all the fields can be displayed underneath the selector (`$preview='1'`).
 
@@ -83,21 +86,23 @@ Oh, and the @ at the end is to confirm you want the 2 blank lines processed (any
 
 #### Variables syntax
 
-The syntax for a front-matter variable of type `field` accepts the 3 following formats:
+The syntax for a front-matter variable is `vartype:varname[!var label][:][default value]`, where:
 
-1. `field:customer` - the default value will be `customer`, i.e.: the variable name
-2. `field:customer:` - defaults to `${varname}`, i.e.: submitting with no change, the 'placeholder' var stays in template
-3. `field:customer:Customer` - defaults to 'Customer'
+1. `vartype` - variable type (see types below) - _mandatory_
+2. `varname` - the name of the variable (used to perform the substitutions in template file) - _mandatory_
+3. `var label` - the label that is displayed in Dmenu/Yad forms that field
+4. `the colon sign` - to indicate a default value follows
+4. `default value` - the default value for the variable
+
+The last 3 are optional.
 
 #### Data variables types
 
 Currently, 5 types of data variables are supported
 
-1. `field`, `var`,  `text` or `entry` - single line input field
-2. `select` or `selectbox` - a field with a list of pre-defined values displayed as a selectbox item
-3. `combo` or `combobox` - like select field, but allows a custom value to be entered
-4. `txt` or `textarea` - multiline (textarea) input field
-5. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
+1. `entry`, `field`, `var` or `text` - single line input field
+2. `txt` or `textarea` - multiline (textarea) input field
+3. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
    - a default is specified as usual: `num:minutes:10`
    - an accepted range is specific by appending `!MIN..MAX` (e.g.: `num:minutes:10!0..20`)
    - the stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
@@ -109,17 +114,18 @@ Currently, 5 types of data variables are supported
      - **dmenu**
        - takes the default value
        - discard all the rest
+4. `select` or `selectbox` - a field with a list of pre-defined values displayed as a selectbox item
+5. `combo` or `combobox` - like select field, but allows a custom value to be entered
 
 #### Front-matter overrides variables
 
-4 special front-matter variables can be used to override reXply options.
+3 special front-matter variables can be used to override reXply options. Note: they must come before regular variables.
 
 They accept `1`/`0`, like the config vars, or aliases like `true`/`false`, `yes`/`no`, etc).
 
 1. `yadform` or `editor` (overrides `$yadform`)
 2. `preview`
-3. `literal`
-4. `runeval`
+3. `runeval`
 
 #### Specifics of each _form-filling_ utility
 
@@ -150,13 +156,13 @@ this line is not a comment but parsing will fail: 'this' is not a valid variable
   - prepend all them with a _prefix__ (e.g.: `field:field_customer:Customer`), making the variable names still _readable_ but much less likely (near impossible) to match your input data;
   - make the variables' names all uppercase;
 
-### Bashdown files
+### Template evaluation (passing them through eval)
 
-You can add bash subshells `$()` on your file. These will be executed (**with your homedir as their initial working directory**) and their output will replace the subshell dynamically in the template (just like as any command you run in your shell).
+You can add bash subshells `$()` on your file. These will be executed (**with your homedir as their initial working directory**) and their output will replace the subshell dynamically in the template (just like as any command you run in a terminal window).
 
 Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_
 
-Note: some consider eval dangerous (have you ever heard _eval is evil_?) so environment vars substitutions is made using just `envsubst` by default - if you want to go evil way, I mean.. eval way, enable eval by setting `$runeval='1'`, passing `-E 1` parameter, or add `runeval:true` to template).
+Note: some consider eval dangerous (have you ever heard _eval is evil_?) so environment vars and front-matter vars substitutions are made using just `envsubst` by default - if you want to go evil way, I mean.. eval way, enable eval by setting `$runeval='1'`, passing `-E 1` parameter, or add `runeval:true` to template front-matter).
 
 ### Bash scripts
 
@@ -166,8 +172,8 @@ Be careful. Your homedir is the initial working directory when you start reXply 
 
 Please note:
 
-1. if the file is not executable, no matter the extension, it will be processed as a regular text/bashdown template.
-2. the files are not executed direcly by default (`$execute='0'`), they are called through `bash`, like this: `bash <file>`.
+1. if the file is not executable, no matter the extension, it will be processed as a regular text template.
+2. the files are not executed directly by default (`$execute='0'`), they are called through `bash`, like this: `bash <file>`.
 3. If you enable `$execute` or pass `-X 1` the file will be executed **direcly**, making reXply act as a truly and independent "launcher" for your applications/scripts.
 
 I recommend you add `#!/bin/bash` hashbang at the top of the file and use `.bash` or `.sh` extension so your text editors also know they are shell executable files - and they keep being properly executed if you enable `$execute`.
@@ -192,7 +198,7 @@ We will avoid updating the additional config file but _take your backups before 
 
 - [ ] test if everything works in OSX (help wanted)
 - [ ] improve textarea fields (the pipe char `|` currently breaks field<->data associations)
-- [ ] provide a way to create new bashdown files with front-matter variables using the script itself
+- [ ] provide a way to create new files with front-matter headers using the script itself
 - [ ] buy more coffee (please donate below!)
 
 ## More info regarding the dependencies

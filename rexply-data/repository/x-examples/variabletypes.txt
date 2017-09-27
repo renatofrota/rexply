@@ -1,9 +1,14 @@
 ---
-field:customer:Customer
-txt:code:
-num:minutes:10!0..20!5
-#preview:true
-#editor:full
+#editor:1
+#preview:0
+#
+#vartype:varname
+#vartype:varname!Field Label:default value
+#field label and default value are optional
+#
+entry:customer!Customer name:
+txt:code!Code used to fix
+num:minutes!Time to take effect (in minutes):10!0..20!5
 ---
 Hello ${customer},
 
