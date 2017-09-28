@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.1"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -141,16 +141,20 @@ process() {
 		enter="\n"
 		header=$(cat "$1" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
 		if [[ ! -z $header ]]; then
+			declare -A rexply
 			literal="0"
-			yadform "${header}" || yerror "unable to process headers" || exit $?
+			yadform "${header}" || yerror "output of template processing is empty - process aborted or failed" || exit $?
 			txt="$(awk "/^---$/{i++}i>=2{print}" "$1" | tail -n +2)" || yerror "unable to strip headers from file: $1" || exit $?
 		fi
 	fi
 	ifs "e"
 	if [[ "$literal" != "1" ]]; then
-		txt=$(echo "$txt" | sed -e 's,\${\([^}]*\)},${rexply_\1},g')
+		for rfield in ${!rexply[@]}; do
+			txt=$(echo "$txt" | sed -e "s,\${$rfield},\${rexply_$rfield},g")
+		done
 		if [[ "$runeval" != "1" ]]; then
 			txt=$(echo "$txt" | envsubst) || yerror "unable to perform variable substitutions" || exit $?
+			echo "$txt" || yerror "unable to print out template" || exit $?
 		else
 			echo "$txt" | sed 's/\\/\\\\/g' | while read line; do
 				[[ "$line" =~ '$' ]] && line="$(eval "printf -- \"$( printf "%s" "$line")\"")"
@@ -201,27 +205,27 @@ yadform() {
 						num|numeric)
 							yadfields+=("--field=$ydatat:NUM")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
-							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("")
 							;;
 						txt|textarea)
 							yadfields+=("--field=$ydatat:TXT")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1 | cut -d '!' -f 1)"
-							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("")
 							;;
 						field|var|entry|text)
 							yadfields+=("--field=$ydatat")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1 | cut -d '!' -f 1)"
-							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("")
 							;;
 						select|selectbox)
 							yadfields+=("--field=$ydatat:CB")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
-							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("")
 							;;
 						combo|combobox)
 							yadfields+=("--field=$ydatat:CBE")
 							getvalue="$(echo "$ydata2" | cut -d '#' -f 1)"
-							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("\${$ydata1}")
+							[[ ! -z "$getvalue" ]] && yadfields+=("$getvalue") || yadfields+=("")
 							;;
 						*)
 							;;
@@ -258,17 +262,18 @@ yadform() {
 		for yfields in ${yfieldlist[@]}; do
 			value=$(echo -e "${yform[$yfieldsstep]}")
 			yfieldsstep=$((yfieldsstep+1))
+			rexply[$yfields]="$(echo $value | sed 's.,000000..')"
 			export rexply_${yfields}="$(echo $value | sed 's.,000000..')"
 		done
 	else
 		for dfields in "${dmfieldlist[@]}"; do
 			if [[ "$preview" == "1" ]]; then
 				[[ "$vertlis" -lt ${#dmfieldlist[@]} ]] && vertlis=$((${#dmfieldlist[@]}+7))
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && echo -en ">>> "; echo "[ ${dmenutitles[$dfieldsstep]} ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" )
+				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && echo -en ">>> "; echo "[ ${dmenutitles[$dfieldsstep]} ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
 			else
-				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "\${$dfields}" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" )
+				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
 			fi
-			[[ ! -z "$value" ]] && dmenufields[$dfields]="$value" && export rexply_${dfields}="$value" || log "Error: aborted" || exit $?
+			dmenufields[$dfields]="$value" && rexply[$dfields]="$value" && export rexply_${dfields}="$value" || log "Error: aborted" || exit $?
 		done
 	fi
 	ifs "r"
@@ -405,7 +410,11 @@ run() {
 			${bashing} "$filename" &> $tmpfile || yerror "unable to write $filename execution output to tmpfile: $tmpfile" || exit $?
 		else
 			content="$(cat "$filename" | process "$filename")"
-			[[ $? == 0 ]] || yerror "output of template processing is empty - process aborted or failed" || exit $?
+			case $? in
+				0) ;;
+				2) exit $? ;;
+				*) yerror "output of template processing is empty - process aborted or failed" || exit $?
+			esac
 			if [[ "${#content}" == 0 ]]; then
 				printf "$filename evaluated empty" > $tmpfile && yerror "output of $filename evaluation is empty" && exit 1
 			else
@@ -687,6 +696,9 @@ vchanges() {
 		[*] improved templates evaluation
 		[*] added a prefix to front-matter variables during processing to avoid conflicts with internal and environment vars
 		[*] removed \$literal setting - any template with no front-matter is considered text-only and pasted as-is
+		[*] fixed a problem introduced in v0.1.1 rev.a (rev.b)
+		[*] front-matter variables now accept empty values as defaults
+		[*] dmenu now accepts empty values as well (if an option is selected, submit your input with shift-enter)
 
 	v0.1.0 - 2017-09-24
 		[+] added support to front-matter variables select, selectbox, combo, combobox in dmenu

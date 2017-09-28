@@ -50,7 +50,6 @@ Create a section with some variables at the top of the file (surround the variab
 
 ```
 ---
-#vartype:varname
 #vartype:varname!Field Label:default value
 #field label and default value are optional
 entry:customer!Customer name:
@@ -76,7 +75,7 @@ When inserting this template, reXply will ask you to provide the data to the 3 v
 - the _code_ you've used to resolve his problem
 - how many minutes it will take to reflect on his end
 
-After the variable name, you can add `:` and the default input for that variable. When no default is provided, variable name will be the default. When default is empty (`:` and nothing in front of it), the default will be `${variable}`.
+After the variable name, you can add `:` and the default input for that variable. When no default is provided, variable name will be the default. To make default empty just add `:` and nothing else in front of it.
 
 If using `dmenu`, you will see an empty field with a 'selection' below (the default input). You can type any value or just hit enter to use the pre-selected option. One field at a time. Optionally, a preview of all the fields can be displayed underneath the selector (`$preview='1'`).
 
@@ -149,7 +148,8 @@ this line is not a comment but parsing will fail: 'this' is not a valid variable
 #### Front-matter tips:
 
 1. you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
-2. the preview lines (those displayed below `dmenu` when `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are smarter ways to "fix" it without taking it hard):
+2. the preview lines (those displayed below `dmenu` when `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are *several* smarter ways to "fix" it without taking it hard):
+  - use **shift+return** to submit to send your current input instead selected item
   - disable preview specifically for that template, by adding `preview:false` to it's front-matter;
   - use less-common words as variable names (or just combine words like `customer_name`);
   - change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
