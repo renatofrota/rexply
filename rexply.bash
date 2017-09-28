@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.2"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -151,7 +151,7 @@ process() {
 	questions="0"
 	declare -A questiontitles
 	ifs "n"
-	for questiontitle in $(echo "$txt" | grep -oE '\{\{\?[^\?]*\?\}\}' | sed -e 's,{{?\([^?]*\)?}},\1,g'); do
+	for questiontitle in $(echo "$txt" | grep -oE '\{\{\?[^\?]*\?\}\}' | sed -e 's,{{?\([^?]*\)?}},\1,'); do
 		header="$(echo -e "$header\nentry:question_$questions!$questiontitle:")"
 		questiontitles[$questions]="$questiontitle"
 		questions=$((questions+1))
@@ -163,7 +163,7 @@ process() {
 		ifs "n"
 		if [[ "$questions" != 0 ]]; then
 			for questiontitle in ${!questiontitles[@]}; do
-				txt=$(echo "$txt" | sed -e "s,{{?${questiontitles[$questiontitle]}?}},\${rexply_question_${questiontitle}},g")
+				txt=$(echo "$txt" | sed -e "0,/{{?${questiontitles[$questiontitle]}?}}/ s,,\${rexply_question_${questiontitle}},")
 			done
 		fi
 		ifs "e"
