@@ -34,7 +34,8 @@ The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`.
 
 The files can be:
 
-- text files
+- regular text files
+- text with dynamic questions
 - front-matter powered templates
 - "evaluated" (processed with `eval`)
 - bash scripts (executable scripts - preferably with `#!/bin/bash` hashbang)
@@ -44,9 +45,19 @@ The files can be:
 
 No secrets on this. I just recommend you append .txt to the file names so your editors do not try to apply syntax highlighting based on file contents.
 
+### Dynamic questions
+
+You can add questions that will be dynamically replaced during text processing.
+
+```
+Hello, {{?Friend's name?}}! How are you going today?
+```
+
+When pasting this template, you will be asked "Friend's name".
+
 ### Front-matter powered templates
 
-Create a section with some variables at the top of the file (surround the variables by `---` above and below) and use them within template text. Example:
+Create a section with some variables at the top of the file (surround the variables by `---` above and below) and use them within template text in format `${varname}`. Example:
 
 ```
 ---
@@ -91,7 +102,7 @@ The syntax for a front-matter variable is `vartype:varname[!var label][:][defaul
 2. `varname` - the name of the variable (used to perform the substitutions in template file) - _mandatory_
 3. `var label` - the label that is displayed in Dmenu/Yad forms that field
 4. `the colon sign` - to indicate a default value follows
-4. `default value` - the default value for the variable
+5. `default value` - the default value for the variable
 
 The last 3 are optional.
 

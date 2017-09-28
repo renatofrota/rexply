@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.1.1"
-revision="b"
+version="0.1.2"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -147,8 +147,26 @@ process() {
 			txt="$(awk "/^---$/{i++}i>=2{print}" "$1" | tail -n +2)" || yerror "unable to strip headers from file: $1" || exit $?
 		fi
 	fi
+	header=""
+	questions="0"
+	declare -A questiontitles
+	ifs "n"
+	for questiontitle in $(echo "$txt" | grep -oE '\{\{\?[^\?]*\?\}\}' | sed -e 's,{{?\([^?]*\)?}},\1,g'); do
+		header="$(echo -e "$header\nentry:question_$questions!$questiontitle:")"
+		questiontitles[$questions]="$questiontitle"
+		questions=$((questions+1))
+	done
+	ifs "r"
+	[[ "$questions" != "0" ]] && { literal="0" && yadform "${header}" || yerror "failure processing template's questions" || exit $? ; }
 	ifs "e"
 	if [[ "$literal" != "1" ]]; then
+		ifs "n"
+		if [[ "$questions" != 0 ]]; then
+			for questiontitle in ${!questiontitles[@]}; do
+				txt=$(echo "$txt" | sed -e "s,{{?${questiontitles[$questiontitle]}?}},\${rexply_question_${questiontitle}},g")
+			done
+		fi
+		ifs "e"
 		for rfield in ${!rexply[@]}; do
 			txt=$(echo "$txt" | sed -e "s,\${$rfield},\${rexply_$rfield},g")
 		done
@@ -691,6 +709,9 @@ vchanges() {
 	$head
 
 	https://github.com/renatofrota/rexply
+
+	v0.1.2 - 2017-09-28
+		[+] added support to dynamic template questions in format {{?What do you want to put here?}} - a la Typinator
 
 	v0.1.1 - 2017-09-28
 		[*] improved templates evaluation
