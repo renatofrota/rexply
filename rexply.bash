@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.5"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -386,7 +386,7 @@ pasteit() {
 	if [[ "$copytoc" ]]; then
 		case $copycmd in
 			'1') xclip -selection $clipboard -i $1 ;;
-			'2') xsel --$clipboard -i $1 ;;
+			'2') cat $1 | xsel --$clipboard -i ;;
 			'3') cat $1 | pbcopy ;;
 			*) yerror "invalid \$copycmd value (set 1 for xclip, 2 for xsel, 3 for pbcopy/pbpaste)" || exit 1 ;;
 		esac
@@ -396,7 +396,7 @@ pasteit() {
 	if [[ $restore != "0" ]]; then
 		case $copycmd in
 			'1') restoreclipboard="xclip -selection $clipboard" ;;
-			'2') restoreclipboard="xsel --$clipboard" ;;
+			'2') restoreclipboard="xsel --$clipboard -i" ;;
 			'3') restoreclipboard="pbcopy" ;;
 			*) yerror "invalid \$copycmd value (set 1 for xclip, 2 for xsel, 3 for pbcopy/pbpaste)" || exit 1 ;;
 		esac
@@ -753,6 +753,8 @@ vchanges() {
 	v0.1.5 - 2017-10-08
 		[+] added \$seetips option (splitting \$preview=1 or 2 in individual configuration variables!)
 		[+] added \$toupper option (uppercase all letters in dmenu lines to prevent matching input data)
+		rev.b:
+		[*] fixed operations with xsel (\$copycmd=2)
 
 	v0.1.4 - 2017-10-08
 		[+] \$preview now accepts a new value (2) - and defaults to 1 again
