@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.1.2"
-revision="b"
+version="0.1.3"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -40,11 +40,13 @@ waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/sc
 
 bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
 vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
-preview='1' # display a "live preview" of front-matter fields to-be/processed, bellow dmenu inputs
+preview='0' # display a "live preview" of front-matter fields to-be/processed, bellow dmenu inputs
 # note: the preview lines are "filtered" as you type and will eventually disappear: once the input
 # text do not match any of them! If it is a problem (you often ends up selecting an existing item)
 # you can add a field 'preview:false' to disable field preview for a particular file. the same way
 # you can add a field 'preview:true' to enable field it for a particular file if globally disabled
+# or just get used to hit shift+enter to submit what you have typed in instead 'select' an option!
+# accepts a special value '2': like '1' but display a tip about shift+enter below the preview area
 
 dmenunf='white' # dmenu foregound color
 dmenunb='blue' # dmenu background color
@@ -104,16 +106,6 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 
 # THAT'S IT, STOP EDITING!
 
-
-
-
-
-
-
-
-
-
-
 # INTERNAL SETUP
 run=$(basename ${BASH_SOURCE[0]});
 realpath="${BASH_SOURCE[0]}";
@@ -141,7 +133,8 @@ process() {
 		enter="\n"
 		header=$(cat "$1" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
 		if [[ ! -z $header ]]; then
-			declare -A rexply
+			# declare -A rexply
+			rexply=()
 			literal="0"
 			yadform "${header}" || yerror "output of template processing is empty - process aborted or failed" || exit $?
 			txt="$(awk "/^---$/{i++}i>=2{print}" "$1" | tail -n +2)" || yerror "unable to strip headers from file: $1" || exit $?
@@ -158,7 +151,6 @@ process() {
 	done
 	ifs "r"
 	[[ "$questions" != "0" ]] && { literal="0" && yadform "${header}" || yerror "failure processing template's questions" || exit $? ; }
-	ifs "e"
 	if [[ "$literal" != "1" ]]; then
 		ifs "n"
 		if [[ "$questions" != 0 ]]; then
@@ -166,8 +158,8 @@ process() {
 				txt=$(echo "$txt" | sed -e "0,/{{?${questiontitles[$questiontitle]}?}}/ s,,\${rexply_question_${questiontitle}},")
 			done
 		fi
-		ifs "e"
-		for rfield in ${!rexply[@]}; do
+		ifs "r"
+		for rfield in ${rexply[@]}; do
 			txt=$(echo "$txt" | sed -e "s,\${$rfield},\${rexply_$rfield},g")
 		done
 		if [[ "$runeval" != "1" ]]; then
@@ -182,7 +174,6 @@ process() {
 	else
 		echo "$txt" || yerror "unable to print out literal template" || exit $?
 	fi
-	ifs "r"
 	return 0
 }
 
@@ -253,7 +244,8 @@ yadform() {
 					declare -A dmenutitles
 					case $ytype in
 						preview)
-							[[ "$ydata1" =~ (true|on|yes|enable|1) ]] && preview="1"
+							[[ "$ydata1" =~ (2) ]] && preview="2"
+							[[ "$ydata1" =~ (true|on|yes|enable|1) ]] && [[ "$preview" -lt "1" ]] && preview="1"
 							[[ "$ydata1" =~ (false|off|no|disable|0) ]] && preview="0"
 							;;
 						num|numeric)
@@ -280,18 +272,27 @@ yadform() {
 		for yfields in ${yfieldlist[@]}; do
 			value=$(echo -e "${yform[$yfieldsstep]}")
 			yfieldsstep=$((yfieldsstep+1))
-			rexply[$yfields]="$(echo $value | sed 's.,000000..')"
+			rexply+=($yfields)
+			ifs "r"
 			export rexply_${yfields}="$(echo $value | sed 's.,000000..')"
+			ifs "n"
 		done
 	else
+		[[ "$preview" == "2" ]] && previewmsg="\n--- Tips ---\nEnter: submit input or selection (if matching any line)\nShift+enter: forcedly submit your input, no matter what" && previewmsglines="4" || previewmsglines="0"
+		totalvars=${#dmfieldlist[@]}
 		for dfields in "${dmfieldlist[@]}"; do
-			if [[ "$preview" == "1" ]]; then
-				[[ "$vertlis" -lt ${#dmfieldlist[@]} ]] && vertlis=$((${#dmfieldlist[@]}+7))
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && echo -en ">>> "; echo "[ ${dmenutitles[$dfieldsstep]} ] => ${dmenufields[$dfieldsstep]}" ; done ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
+			totallines=0
+			if [[ "$preview" -ge "1" ]]; then
+				totallines=$(($totallines+2))
+				totallines=$(($totallines+$previewmsglines))
+				ifs "!"; for selectitem in ${dmenufields[$dfields]}; do totallines=$(($totallines+1)); done ; ifs "n"
+				for dfieldsstep in ${dmfieldlist[@]}; do totallines=$(($totallines+1)) ; done
+				log "totallines: $totallines"
+				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n\n--- Preview ---" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && echo -en ">>> "; echo "[ ${dmenutitles[$dfieldsstep]} ] => ${dmenufields[$dfieldsstep]}"; done ; echo -en "$previewmsg" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
 			else
-				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
+				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; totallines=$(($totallines+1)); done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
 			fi
-			dmenufields[$dfields]="$value" && rexply[$dfields]="$value" && export rexply_${dfields}="$value" || log "Error: aborted" || exit $?
+			dmenufields[$dfields]="$value" && rexply+=($dfields) && export rexply_${dfields}="$value" || log "Error: aborted" || exit $?
 		done
 	fi
 	ifs "r"
@@ -345,13 +346,18 @@ pasteit() {
 		clipboard=$clipboarddefault
 	fi
 	if [[ "$cbackup" != "0" ]]; then
-		[[ "$copycmd" == "1" ]] && getclipboard="xclip -selection $clipboard -o" || { [[ "$copycmd" == "2" ]] && getclipboard="xsel --$clipboard -o" || getclipboard="pbpaste" ; }
+		case $copycmd in
+			'1') getclipboard="xclip -selection $clipboard -o" ;;
+			'2') getclipboard="xsel --$clipboard -o" ;;
+			'3') getclipboard="pbpaste" ;;
+			*) yerror "invalid \$copycmd value (set 1 for xclip, 2 for xsel, 3 for pbcopy/pbpaste)" || exit 1 ;;
+		esac
 		originalclipboard=$($getclipboard) || { yask "unable to backup current (empty?) clipboard data. proceed?" && originalclipboard="" || log "Notice: aborted" || backwindow || exit $? ; }
 	fi
 	if [[ "$copytoc" ]]; then
 		case $copycmd in
 			'1') xclip -selection $clipboard -i $1 ;;
-			'2') xsel  --$clipboard -i $1 ;;
+			'2') xsel --$clipboard -i $1 ;;
 			'3') cat $1 | pbcopy ;;
 			*) yerror "invalid \$copycmd value (set 1 for xclip, 2 for xsel, 3 for pbcopy/pbpaste)" || exit 1 ;;
 		esac
@@ -359,8 +365,13 @@ pasteit() {
 	fi
 	[[ "$pasteit" != "0" ]] && { ${paste} && sleep "${waitbit}s" || yerror "unable to paste data to pid $proc ($cmdline)" || exit $? ; }
 	if [[ $restore != "0" ]]; then
-		[[ "$copycmd" == "1" ]] && restoreclipboard="xclip -selection $clipboard" || { [[ "$copycmd" == "2" ]] && restoreclipboard="xsel --$clipboard" || restoreclipboard="pbcopy" ; }
-		echo $originalclipboard | $restoreclipboard || yerror "unable to restore original clipboard data" || exit $?
+		case $copycmd in
+			'1') restoreclipboard="xclip -selection $clipboard" ;;
+			'2') restoreclipboard="xsel --$clipboard" ;;
+			'3') restoreclipboard="pbcopy" ;;
+			*) yerror "invalid \$copycmd value (set 1 for xclip, 2 for xsel, 3 for pbcopy/pbpaste)" || exit 1 ;;
+		esac
+		echo "$originalclipboard" | $restoreclipboard || yerror "unable to restore original clipboard data" || exit $?
 	fi
 }
 
@@ -438,10 +449,10 @@ run() {
 			else
 				printf "%s" "$content" > $tmpfile || yerror "unable to write evaluation of $filename to tmpfile: $tmpfile" || exit $?
 			fi
+			[[ "$checkpt" == "1" ]] && checkpt $tmpfile || yerror "unable to remove the placeholder char at end of $tmpfile" || exit $?
+			cat $tmpfile | pasteit $tmpfile || yerror "unable to paste data" || exit $?
+			[[ "$deltemp" == "1" ]] && { rm -f $tmpfile || yerror "unable to remove tmpfile: $tmpfile" || exit $? ; }
 		fi
-		[[ "$checkpt" == "1" ]] && checkpt $tmpfile || yerror "unable to remove the placeholder char at end of $tmpfile" || exit $?
-		cat $tmpfile | pasteit $tmpfile || yerror "unable to paste data" || exit $?
-		[[ "$deltemp" == "1" ]] && { rm -f $tmpfile || yerror "unable to remove tmpfile: $tmpfile" || exit $? ; }
 		exit 0
 	fi
 }
@@ -709,6 +720,12 @@ vchanges() {
 	$head
 
 	https://github.com/renatofrota/rexply
+
+	v0.1.3 - 2017-10-08
+		[*] clipboard manipulation functions do not run anymore when launching executable files
+		[*] preview now defaults to 0
+		[*] clipboard restoration now respects line breaks
+		[*] improved vertical selection in dmenu when variables have multiple options
 
 	v0.1.2 - 2017-09-28
 		[+] added support to dynamic template questions in format {{?What do you want to put here?}} - a la Typinator
