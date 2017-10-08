@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.3"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -287,7 +287,6 @@ yadform() {
 				totallines=$(($totallines+$previewmsglines))
 				ifs "!"; for selectitem in ${dmenufields[$dfields]}; do totallines=$(($totallines+1)); done ; ifs "n"
 				for dfieldsstep in ${dmfieldlist[@]}; do totallines=$(($totallines+1)) ; done
-				log "totallines: $totallines"
 				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n\n--- Preview ---" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && echo -en ">>> "; echo "[ ${dmenutitles[$dfieldsstep]} ] => ${dmenufields[$dfieldsstep]}"; done ; echo -en "$previewmsg" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
 			else
 				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; totallines=$(($totallines+1)); done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
@@ -371,7 +370,7 @@ pasteit() {
 			'3') restoreclipboard="pbcopy" ;;
 			*) yerror "invalid \$copycmd value (set 1 for xclip, 2 for xsel, 3 for pbcopy/pbpaste)" || exit 1 ;;
 		esac
-		echo "$originalclipboard" | $restoreclipboard || yerror "unable to restore original clipboard data" || exit $?
+		echo -n "$originalclipboard" | $restoreclipboard || yerror "unable to restore original clipboard data" || exit $?
 	fi
 }
 
@@ -724,7 +723,7 @@ vchanges() {
 	v0.1.3 - 2017-10-08
 		[*] clipboard manipulation functions do not run anymore when launching executable files
 		[*] preview now defaults to 0
-		[*] clipboard restoration now respects line breaks
+		[*] clipboard restoration now respects line breaks (and do not add trailing lines, rev.b)
 		[*] improved vertical selection in dmenu when variables have multiple options
 
 	v0.1.2 - 2017-09-28
