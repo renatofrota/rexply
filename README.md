@@ -50,6 +50,8 @@ echo && read -rep "Reinstall rexply.cfg file? [y/n]: " -n 1 reinstall && \
 rm -rf rexply-master rexply.zip && echo "All done!" && IFS=$OLD_IFS
 ```
 
+## Operation
+
 It works from command line (terminal) - just type in 'rexply'.
 
 But it is only **1% as useful as it could be** by running it this way. To feel the power:
@@ -59,9 +61,11 @@ But it is only **1% as useful as it could be** by running it this way. To feel t
 3. go to an editor, browser, or any other text area field
 4. press the binded key and be amazed!
 
-## More advanced operation
+## Make it dance in your rhythm
 
-The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`. Just create more folders/files there.
+The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`.
+
+You can just create more folders/files there (or change default repository in rexply.cfg).
 
 The files can be:
 
