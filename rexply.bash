@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.4"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -292,7 +292,7 @@ yadform() {
 			ifs "n"
 		done
 	else
-		[[ "$preview" == "1" ]] && previewmsg="\n--- Tips ---\nEnter: submit input or selection (if matching any line)\nShift+enter: forcedly submit your input, no matter what" && previewmsglines="4" || previewmsglines="0"
+		[[ "$preview" == "1" ]] && previewmsg="\n                 --- Instructions ---\nEnter: submit input or selection (if matching any line)\nShift+enter: forcedly submit your input, no matter what" && previewmsglines="4" || previewmsglines="0"
 		totalvars=${#dmfieldlist[@]}
 		for dfields in "${dmfieldlist[@]}"; do
 			totallines=0
@@ -301,9 +301,9 @@ yadform() {
 				totallines=$(($totallines+$previewmsglines))
 				ifs "!"; for selectitem in ${dmenufields[$dfields]}; do totallines=$(($totallines+1)); done ; ifs "n"
 				for dfieldsstep in ${dmfieldlist[@]}; do totallines=$(($totallines+1)) ; done
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n\n--- Preview ---" ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && echo -en ">>> "; echo "[ ${dmenutitles[$dfieldsstep]} ] => ${dmenufields[$dfieldsstep]}"; done ; echo -en "$previewmsg" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
+				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n\n                 --- Fields List ---" ; for dfieldsstep in ${dmfieldlist[@]}; do printf "%26s | %s" "${dmenutitles[$dfieldsstep]}" "${dmenufields[$dfieldsstep]}"; [[ "$dfields" == "$dfieldsstep" ]] && echo "__________" || echo ""; done ; echo -en "$previewmsg" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
 			else
-				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; totallines=$(($totallines+1)); done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply [ ${dmenutitles[$dfields]} ]" ) || return 2
+				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; totallines=$(($totallines+1)); done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
 			fi
 			dmenufields[$dfields]="$value" && rexply+=($dfields) && export rexply_${dfields}="$value" || log "Error: aborted" || exit $?
 		done
