@@ -1,27 +1,58 @@
 # reXply
 reXply is a handy tool to copy/paste replies and scripts with an advanced front-matter system for variables substitutions and dynamic per-template settings, bash script processing/evaluation, and much more, that can also be used as a launcher to other scripts/executables!
 
+## Current version
+
+v0.1.4b - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L737)
+
 ## Dependencies
 
 - `dmenu` and/or `yad`
-- `xclip`
-- `xdotool`
+- `xclip` and/or `xsel` and/or `pbcopy`+`pbpaste`
+- `xdotool` (optional but strongly recommended)
 
 More info regarding these dependencies at the end of this file.
 
 ## How to install
 
-- install as more dependencies you can on your system (dmenu, yad, xclip, xdotool) for easier operation
-- if you are unsure how to install, just proceed with next steps (the script will try to install them - if you're using Linux)
-- clone this repo, symlink the binary in a folder in your $PATH
+1. install as more dependencies as you can on your system (recommended: `dmenu`, `yad`, `xclip`, `xdotool`)
+2. clone this repo
+3. symlink the binary in a folder in your $PATH
+
+If you are unsure, just copy and paste on your terminal (the script will try to install the dependencies - if you're using Linux):
 
 ```
-cd ~/ ; git clone https://github.com/renatofrota/rexply.git
-ln -s ~/rexply/rexply.bash $(echo $PATH|cut -d: -f1)/rexply
-echo "reXply installed to $(echo $PATH|cut -d: -f1)/rexply"
+cd ~/ && \
+git clone https://github.com/renatofrota/rexply.git && \
+rexplylink=$(echo $PATH|cut -d: -f1)/rexply && \
+{ [ ! -f $rexplylink ] && sudo ln -s ~/rexply/rexply.bash $rexplylink ; }; \
+[ ! -f $(echo $PATH|cut -d: -f1)/rexply ] && echo problem creating symlink || \
+echo "all done! now assign a keybinding to call 'rexply' on your O.S. ;)"
 ```
 
-It works from command line (terminal) - just type in 'rexply' - but it is only **1% as useful as it could be** by running it this way. To feel the power:
+## Upgrading
+
+1. download and extract the zip or clone the repo to an alternative location
+2. copy everything over your existing install (except rexply.cfg)
+
+If you are unsure, just copy and paste on your terminal:
+
+```
+OLD_IFS=$IFS && IFS=$'\n' && cd ~/ && echo -n "Downloading..." && \
+wget -q -O rexply.zip https://github.com/renatofrota/rexply/archive/master.zip && \
+echo -en "\nExtracting..." && sleep 1 && unzip -q -o rexply.zip && mkdir -p rexply && \
+echo -en "\nCopying over..." && sleep 1 && for dir in $(find rexply-master/ -type d); \
+do mkdir -p "$(echo $dir | sed 's,^rexply-master,rexply,')"; done && \
+for file in $(find rexply-master -type f ! -name rexply.cfg); \
+do cp "$file" "$(echo $file | sed 's,^rexply-master,rexply,')"; done && \
+echo && read -rep "Reinstall rexply.cfg file? [y/n]: " -n 1 reinstall && \
+{ if [[ "$reinstall" =~ (1|y|Y|s|S) ]]; then cp rexply-master/rexply.cfg rexply/; fi ; } && \
+rm -rf rexply-master rexply.zip && echo "All done!" && IFS=$OLD_IFS
+```
+
+It works from command line (terminal) - just type in 'rexply'.
+
+But it is only **1% as useful as it could be** by running it this way. To feel the power:
 
 1. add the custom command `rexply` to your Keyboard shortcuts/keybindings area;
 2. bind a key to the custom command you've created

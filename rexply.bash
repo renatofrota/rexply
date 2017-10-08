@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.4"
-revision="b"
+revision="c"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -753,7 +753,7 @@ vchanges() {
 		[*] improved templates evaluation
 		[*] added a prefix to front-matter variables during processing to avoid conflicts with internal and environment vars
 		[*] removed \$literal setting - any template with no front-matter is considered text-only and pasted as-is
-	rev.b:
+		rev.b:
 		[*] fixed an evaluation problem introduced in v0.1.1 rev.a
 		[*] front-matter variables now accept empty values as defaults
 		[*] dmenu now accepts empty values as well (if an option is selected, submit your input with shift-enter)
