@@ -127,14 +127,25 @@ Currently, 5 types of data variables are supported
 4. `select` or `selectbox` - a field with a list of pre-defined values displayed as a selectbox item
 5. `combo` or `combobox` - like select field, but allows a custom value to be entered
 
+#### Keeping variables untouched
+
+You may want to display a `${variable}` in it's literal form (when it's part of the final command you want to run after template is processed). There are 2 ways to do this:
+
+1. add an entry variable and set the default value to the variable string: `entry:variable:${variable}`
+   - it will be displayed during front-matter processing - and you can override it (as any `entry` var)
+2. use the special front-matter command `keep`: `keep:variable`
+   - it won't be displayed during front-matter processing
+
+Note: variables in format `$variable` (without `{}`) are parsed as environment variables (they will "disappear" when pasting a template if they do not exist on your environment). Always use `${variable}` format (with `{}`).
+
 #### Front-matter overrides variables
 
 3 special front-matter variables can be used to override reXply options. Note: they must come before regular variables.
 
-They accept `1`/`0`, like the config vars, or aliases like `true`/`false`, `yes`/`no`, etc).
+They accept `0`/`1`, like the config vars themselves, aliases like `true`/`false`, `yes`/`no`, and some others (check rexply.bash code if you're curious).
 
 1. `yadform` or `editor` (overrides `$yadform`)
-2. `preview`
+2. `preview` (accepts `0`,`1`,`2`)
 3. `runeval`
 
 #### Specifics of each _form-filling_ utility
@@ -162,10 +173,7 @@ this line is not a comment but parsing will fail: 'this' is not a valid variable
 2. the preview lines (those displayed below `dmenu` when `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are *several* smarter ways to "fix" it without taking it hard):
    - use **shift+return** to submit to send your current input instead selected item
    - disable preview specifically for that template, by adding `preview:false` to it's front-matter;
-   - use less-common words as variable names (or just combine words like `customer_name`);
    - change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
-   - prepend all them with a _prefix__ (e.g.: `field:field_customer:Customer`), making the variable names still _readable_ but much less likely (near impossible) to match your input data;
-   - make the variables' names all uppercase;
 
 ### Template evaluation (passing them through eval)
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.1.3"
-revision="b"
+version="0.1.4"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -40,13 +40,13 @@ waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/sc
 
 bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
 vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
-preview='0' # display a "live preview" of front-matter fields to-be/processed, bellow dmenu inputs
+preview='1' # display a "live preview" of front-matter fields to-be/processed, bellow dmenu inputs
 # note: the preview lines are "filtered" as you type and will eventually disappear: once the input
 # text do not match any of them! If it is a problem (you often ends up selecting an existing item)
 # you can add a field 'preview:false' to disable field preview for a particular file. the same way
 # you can add a field 'preview:true' to enable field it for a particular file if globally disabled
 # or just get used to hit shift+enter to submit what you have typed in instead 'select' an option!
-# accepts a special value '2': like '1' but display a tip about shift+enter below the preview area
+# accepts a special value '2': like '1' but hide the tips about shift+enter below the preview area
 
 dmenunf='white' # dmenu foregound color
 dmenunb='blue' # dmenu background color
@@ -123,6 +123,19 @@ replies="$rexplydir/rexply-data/repository"
 configfile="$rexplydir/rexply.cfg"
 [[ -f "$configfile" ]] && source $configfile
 
+inarray() {
+	local array="$1[@]"
+	local seeking=$2
+	local in=1
+	for element in "${!array}"; do
+		if [[ $element == $seeking ]]; then
+			in=0
+			break
+		fi
+	done
+	return $in
+}
+
 process() {
 	txt="$(cat -)";
 	literal="1"
@@ -131,31 +144,30 @@ process() {
 		enter=""
 	else
 		enter="\n"
-		header=$(cat "$1" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
-		if [[ ! -z $header ]]; then
-			# declare -A rexply
-			rexply=()
-			literal="0"
-			yadform "${header}" || yerror "output of template processing is empty - process aborted or failed" || exit $?
-			txt="$(awk "/^---$/{i++}i>=2{print}" "$1" | tail -n +2)" || yerror "unable to strip headers from file: $1" || exit $?
-		fi
 	fi
-	header=""
+	header=$(cat "$1" | grep -iEB100 -m2 '^---$' | grep -Ev '^---$')
+	[[ ! -z "$header" ]] && { txt="$(awk "/^---$/{i++}i>=2{print}" "$1" | tail -n +2)" || yerror "unable to strip headers from file: $1" || exit $? ; }
 	questions="0"
 	declare -A questiontitles
 	ifs "n"
 	for questiontitle in $(echo "$txt" | grep -oE '\{\{\?[^\?]*\?\}\}' | sed -e 's,{{?\([^?]*\)?}},\1,'); do
-		header="$(echo -e "$header\nentry:question_$questions!$questiontitle:")"
-		questiontitles[$questions]="$questiontitle"
-		questions=$((questions+1))
+		if ( ! inarray questiontitles "$questiontitle" ); then
+			header="$(echo -e "${header}\nentry:question_$questions!$questiontitle:")"
+			questiontitles[$questions]="$questiontitle"
+			questions=$((questions+1))
+		fi
 	done
 	ifs "r"
-	[[ "$questions" != "0" ]] && { literal="0" && yadform "${header}" || yerror "failure processing template's questions" || exit $? ; }
+	if [[ ! -z $header ]]; then
+		rexply=()
+		literal="0"
+		yadform "${header}" || yerror "output of template processing is empty - process aborted or failed" || exit $?
+	fi
 	if [[ "$literal" != "1" ]]; then
 		ifs "n"
 		if [[ "$questions" != 0 ]]; then
 			for questiontitle in ${!questiontitles[@]}; do
-				txt=$(echo "$txt" | sed -e "0,/{{?${questiontitles[$questiontitle]}?}}/ s,,\${rexply_question_${questiontitle}},")
+				txt=$(echo "$txt" | sed -e "s,{{?${questiontitles[$questiontitle]}?}},\${rexply_question_${questiontitle}},")
 			done
 		fi
 		ifs "r"
@@ -191,8 +203,9 @@ yform() {
 yadform() {
 	ifs "n"
 	yadfields=()
-	dmenufields=()
-	types=('runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text' 'combo' 'combobox' 'select' 'selectbox')
+	yfieldlist=()
+	dmfieldlist=()
+	types=('keep' 'runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text' 'combo' 'combobox' 'select' 'selectbox')
 	for fmfield in $@; do
 		ytype=$(echo $fmfield | cut -d : -f 1 | tr '[:upper:]' '[:lower:]')
 		for type in "${types[@]}"; do
@@ -202,11 +215,12 @@ yadform() {
 				ydata2=$(echo $ydata | cut -d : -f 2-)
 				ydatat=$(echo $ydata1 | cut -d '!' -f 2-)
 				ydata1=$(echo $ydata1 | cut -d '!' -f 1)
+				[[ "$ytype" == "keep" ]] && rexply+=($ydata1) && export rexply_$ydata1="\${$ydata1}"
 				[[ "$ytype" =~ (editor|yadform) ]] && [[ "$ydata1" =~ (yad|full|gui|visual|true|on|yes|enable|1) ]] && yadform="1"
 				[[ "$ytype" =~ (editor|yadform) ]] && [[ "$ydata1" =~ (dmenu|light|cli|text|false|off|no|disable|0) ]] && yadform="0"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (true|on|yes|1) ]] && runeval="1"
 				[[ "$ytype" == "runeval" ]] && [[ "$ydata1" =~ (false|off|no|0) ]] && runeval="0"
-				[[ ! "$ytype" =~ (preview|editor|yadform|runeval) ]] && {
+				[[ ! "$ytype" =~ (keep|preview|editor|yadform|runeval) ]] && {
 					[[ "$yadform" == "1" ]] && yfieldlist+=("$ydata1") || dmfieldlist+=("$ydata1")
 				}
 				if [[ "$yadform" == "1" ]]; then
@@ -278,12 +292,12 @@ yadform() {
 			ifs "n"
 		done
 	else
-		[[ "$preview" == "2" ]] && previewmsg="\n--- Tips ---\nEnter: submit input or selection (if matching any line)\nShift+enter: forcedly submit your input, no matter what" && previewmsglines="4" || previewmsglines="0"
+		[[ "$preview" == "1" ]] && previewmsg="\n--- Tips ---\nEnter: submit input or selection (if matching any line)\nShift+enter: forcedly submit your input, no matter what" && previewmsglines="4" || previewmsglines="0"
 		totalvars=${#dmfieldlist[@]}
 		for dfields in "${dmfieldlist[@]}"; do
 			totallines=0
 			if [[ "$preview" -ge "1" ]]; then
-				totallines=$(($totallines+2))
+				totallines=$(($totallines+3))
 				totallines=$(($totallines+$previewmsglines))
 				ifs "!"; for selectitem in ${dmenufields[$dfields]}; do totallines=$(($totallines+1)); done ; ifs "n"
 				for dfieldsstep in ${dmfieldlist[@]}; do totallines=$(($totallines+1)) ; done
@@ -719,6 +733,12 @@ vchanges() {
 	$head
 
 	https://github.com/renatofrota/rexply
+
+	v0.1.4 - 2017-10-08
+		[+] \$preview now accepts a new value (2) - and defaults to 1 again
+		[+] new special front-matter command 'keep' to retain special unused variables in template output instead stripping them out
+		[*] processing of front-matter variables and {{?dynamic questions?}} unified (they are now combined and you need to fill only 1 form)
+		[*] dynamic questions can now be used multiple times in the template and you will be asked it's value only once (like front-matter vars)
 
 	v0.1.3 - 2017-10-08
 		[*] clipboard manipulation functions do not run anymore when launching executable files
