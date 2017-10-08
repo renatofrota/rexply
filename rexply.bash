@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.1.4"
-revision="c"
+version="0.1.5"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -46,7 +46,8 @@ preview='1' # display a "live preview" of front-matter fields to-be/processed, b
 # you can add a field 'preview:false' to disable field preview for a particular file. the same way
 # you can add a field 'preview:true' to enable field it for a particular file if globally disabled
 # or just get used to hit shift+enter to submit what you have typed in instead 'select' an option!
-# accepts a special value '2': like '1' but hide the tips about shift+enter below the preview area
+seetips='1' # display tips about dmenu shortcuts below input fields (when processing front-matter)
+toupper='1' # display all lines in dmenu using uppercased letters to prevent matches against input
 
 dmenunf='white' # dmenu foregound color
 dmenunb='blue' # dmenu background color
@@ -136,6 +137,22 @@ inarray() {
 	return $in
 }
 
+to() {
+	local input=$(cat -)
+	case $1 in
+	upper)
+		if [[ $2 != "0" ]]; then
+			echo "$(echo -en "$input" | tr '[:lower:]' '[:upper:]')"
+		else
+			echo "$(echo -en "$input")"
+		fi
+		;;
+	lower)
+		echo "$(echo -en "$input" | tr '[:upper:]' '[:lower:]')" ;;
+	esac
+	return 0
+}
+
 process() {
 	txt="$(cat -)";
 	literal="1"
@@ -207,7 +224,7 @@ yadform() {
 	dmfieldlist=()
 	types=('keep' 'runeval' 'preview' 'editor' 'yadform' 'num' 'numeric' 'txt' 'textarea' 'field' 'var' 'entry' 'text' 'combo' 'combobox' 'select' 'selectbox')
 	for fmfield in $@; do
-		ytype=$(echo $fmfield | cut -d : -f 1 | tr '[:upper:]' '[:lower:]')
+		ytype=$(echo $fmfield | cut -d : -f 1 | to lower)
 		for type in "${types[@]}"; do
 			if [[ "$type" == "$ytype" ]]; then
 				ydata=$(echo $fmfield | cut -d : -f 2-)
@@ -258,8 +275,7 @@ yadform() {
 					declare -A dmenutitles
 					case $ytype in
 						preview)
-							[[ "$ydata1" =~ (2) ]] && preview="2"
-							[[ "$ydata1" =~ (true|on|yes|enable|1) ]] && [[ "$preview" -lt "1" ]] && preview="1"
+							[[ "$ydata1" =~ (true|on|yes|enable|1) ]] && preview="1"
 							[[ "$ydata1" =~ (false|off|no|disable|0) ]] && preview="0"
 							;;
 						num|numeric)
@@ -292,7 +308,7 @@ yadform() {
 			ifs "n"
 		done
 	else
-		[[ "$preview" == "1" ]] && previewmsg="\n                 --- Instructions ---\nEnter: submit input or selection (if matching any line)\nShift+enter: forcedly submit your input, no matter what" && previewmsglines="4" || previewmsglines="0"
+		[[ "$seetips" == "1" ]] && previewmsg=$(echo -en "\n                 --- Instructions ---\nEnter: submit input or selection (if matching any line)\nShift+enter: forcedly submit your input, no matter what\nCtrl+y: paste primary X selection (ie: mouse highlight)\nCtrl+shift(or caps)+Y: paste from the regular clipboard") && previewmsglines="6" || previewmsglines="0"
 		totalvars=${#dmfieldlist[@]}
 		for dfields in "${dmfieldlist[@]}"; do
 			totallines=0
@@ -301,7 +317,7 @@ yadform() {
 				totallines=$(($totallines+$previewmsglines))
 				ifs "!"; for selectitem in ${dmenufields[$dfields]}; do totallines=$(($totallines+1)); done ; ifs "n"
 				for dfieldsstep in ${dmfieldlist[@]}; do totallines=$(($totallines+1)) ; done
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n\n                 --- Fields List ---" ; for dfieldsstep in ${dmfieldlist[@]}; do printf "%26s | %s" "${dmenutitles[$dfieldsstep]}" "${dmenufields[$dfieldsstep]}"; [[ "$dfields" == "$dfieldsstep" ]] && echo "__________" || echo ""; done ; echo -en "$previewmsg" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
+				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n\n                   --- Preview ---" ; for dfieldsstep in ${dmfieldlist[@]}; do printf "%26s | %s" "${dmenutitles[$dfieldsstep]}" "${dmenufields[$dfieldsstep]}"; [[ "$dfields" == "$dfieldsstep" ]] && echo "[ __________ ]" || echo ""; done ; echo -en "$previewmsg" ; } | to upper $toupper | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
 			else
 				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; totallines=$(($totallines+1)); done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
 			fi
@@ -345,7 +361,7 @@ pasteit() {
 	txt="$(cat -)"
 	if [[ "$focusit" == "1" ]]; then
 		proc=$(xdotool getwindowpid $window 2>>$logfile) || yerror "unable to obtain origin window pid (did the process terminate?)" || exit $?
-		cmdline="$(cat /proc/$proc/cmdline | tr '[:upper:]' '[:lower:]')" || yerror "unable to obtain active window cmdline" || exit $?
+		cmdline="$(cat /proc/$proc/cmdline | to lower)" || yerror "unable to obtain active window cmdline" || exit $?
 		xdotool windowactivate --sync $window 2>>$logfile || yerror "unable to focus the desired window to paste" || exit $?
 		if [[ "$cmdline" =~ (terminal|terminator|tilix|tmux|tilda|guake) ]]; then
 			paste=$pasteterminal
@@ -733,6 +749,10 @@ vchanges() {
 	$head
 
 	https://github.com/renatofrota/rexply
+
+	v0.1.5 - 2017-10-08
+		[+] added \$seetips option (splitting \$preview=1 or 2 in individual configuration variables!)
+		[+] added \$toupper option (uppercase all letters in dmenu lines to prevent matching input data)
 
 	v0.1.4 - 2017-10-08
 		[+] \$preview now accepts a new value (2) - and defaults to 1 again

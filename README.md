@@ -3,7 +3,7 @@ reXply is a handy tool to copy/paste replies and scripts with an advanced front-
 
 ## Current version
 
-v0.1.4c - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L737)
+v0.1.5 - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L753)
 
 ## Dependencies
 
@@ -182,11 +182,14 @@ They accept `0`/`1`, like the config vars themselves, aliases like `true`/`false
 #### Specifics of each _form-filling_ utility
 
 - dmenu:
-  - It does not allow you paste data.
-  - Enter submit data. To add line breaks, type `\\n`.
+  - Enter submit selection or input.
+  - Shift+enter to submit input.
+  - Ctrl+y to paste primary X selection ("mouse highlight")
+  - Ctrl+Y to paste clipboard
 - yad:
-  - It allows you paste data on it's fields. However, you cannot use `|` in provided data as it will break the field<->data association (any data after a `|` will be associated to the next field and all the next are also pushed 1 field down).
-  - You may find it hard to tabulate textarea fields. Use Ctrl+tab.
+  - Regular shortcuts (enter submit, tab change field)
+  - On multiline textareas, ctrl+tab to change field
+  - You cannot use `|` in provided data as it will break the field<->data association
 
 #### Comments within front-matter header
 
