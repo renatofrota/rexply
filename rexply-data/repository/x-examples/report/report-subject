@@ -1,3 +1,4 @@
 ---
+runeval:true
 ---
-Report - $(echo $(date +%d)-1 | bc).$(date +%m.%Y) - your.name
+Report - $(printf "%.2d" $(echo $(date +%d)-1 | bc)).$(date +%m.%Y) - renato.frota
