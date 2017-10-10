@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.5"
-revision="b"
+revision="c"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -67,7 +67,7 @@ yfnames=('green' 'white')
 yhidden=('gray' 'white')
 
 yadfile='0' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
-yadform='0' # use yad to process forms when template have front-matter variables and error dialogs
+yadform='1' # use yad to process forms (when template have front-matter vars or dynamic questions)
 
 maxsize='3' # file selection will only show files up to X MB
 # you can still pass a bigger file via -R or 1st non-opt arg
@@ -214,7 +214,7 @@ log() {
 }
 
 yform() {
-	yad --form --title="reXply" --width="580" --borders="20" --on-top --center --skip-taskbar --image='accessories-text-editor' --separator="|" --button="gtk-ok" $@ 2>>$logfile
+	yad --form --title="reXply" --width="580" --borders="20" --on-top --center --image='accessories-text-editor' --separator="|" --button="gtk-ok" $@ 2>>$logfile
 }
 
 yadform() {
@@ -317,7 +317,7 @@ yadform() {
 				totallines=$(($totallines+$previewmsglines))
 				ifs "!"; for selectitem in ${dmenufields[$dfields]}; do totallines=$(($totallines+1)); done ; ifs "n"
 				for dfieldsstep in ${dmfieldlist[@]}; do totallines=$(($totallines+1)) ; done
-				value=$( { echo -e "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )\n\n                   --- Preview ---" ; for dfieldsstep in ${dmfieldlist[@]}; do printf "%26s | %s" "${dmenutitles[$dfieldsstep]}" "${dmenufields[$dfieldsstep]}"; [[ "$dfields" == "$dfieldsstep" ]] && echo "[ __________ ]" || echo ""; done ; echo -en "$previewmsg" ; } | to upper $toupper | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
+				value=$( { echo -en "$( [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; done ; ifs "n" ; } || echo "" )"; echo -e "\n\n                   --- Preview ---" | to upper $toupper ; for dfieldsstep in ${dmfieldlist[@]}; do [[ "$dfields" == "$dfieldsstep" ]] && dmenufields[$dfieldsstep]="[ __________ ]"; printf "%26s | %s\n" "${dmenutitles[$dfieldsstep]}" "${dmenufields[$dfieldsstep]}" | to upper $toupper; done ; echo -en "$previewmsg" | to upper $toupper ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $totallines $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
 			else
 				value=$( { [[ ! -z "${dmenufields[$dfields]}" ]] && { ifs "!"; for selectitem in ${dmenufields[$dfields]}; do echo $selectitem; totallines=$(($totallines+1)); done ; ifs "n" ; } || echo "" ; } | dmenu -nf $dmenunf -nb $dmenunb -sf $dmenusf -sb $dmenusb -l $vertlis $( [[ "$bottoms" != "0" ]] && echo "-b" ) -p "reXply | ${dmenutitles[$dfields]}:" ) || return 2
 			fi
@@ -750,11 +750,14 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
-	v0.1.5 - 2017-10-08
+	v0.1.5 - 2017-10-10
 		[+] added \$seetips option (splitting \$preview=1 or 2 in individual configuration variables!)
 		[+] added \$toupper option (uppercase all letters in dmenu lines to prevent matching input data)
 		rev.b:
 		[*] fixed operations with xsel (\$copycmd=2)
+		rev.c:
+		[*] yad is now properly focused on init - and is now used for form fillings by default (\$yadform=1)
+		[*] fixed an issue with \$toupper also affecting the dmenu options on select/combo front-matter vars
 
 	v0.1.4 - 2017-10-08
 		[+] \$preview now accepts a new value (2) - and defaults to 1 again
