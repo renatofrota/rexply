@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.1.5"
-revision="c"
+version="0.1.6"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -19,6 +19,8 @@ revision="c"
 # "rexply -R subfolder" init from a repository's subdirectory
 # "rexply -R /absolute/path" > init from any other given path
 # "rexply -R subfolder/file" very to the point: just paste it
+
+# GENERAL SETTINGS
 
 deptest="1" # check if all dependencies are installed
 # see README.md footnotes for more information on how
@@ -38,50 +40,32 @@ copycmd='1' # use xclip(1), xsel(2) or pbcopy/pbpaste(3) for all clipboard data 
 [[ "$OSTYPE" == "darwin" ]] && copycmd='3' # this is to make pbcopy default for OSX automatically!
 waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/script interruption)
 
-bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
-vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
-preview='1' # display a "live preview" of front-matter fields to-be/processed, bellow dmenu inputs
-# note: the preview lines are "filtered" as you type and will eventually disappear: once the input
-# text do not match any of them! If it is a problem (you often ends up selecting an existing item)
-# you can add a field 'preview:false' to disable field preview for a particular file. the same way
-# you can add a field 'preview:true' to enable field it for a particular file if globally disabled
-# or just get used to hit shift+enter to submit what you have typed in instead 'select' an option!
-seetips='1' # display tips about dmenu shortcuts below input fields (when processing front-matter)
-toupper='1' # display all lines in dmenu using uppercased letters to prevent matches against input
-
-dmenunf='white' # dmenu foregound color
-dmenunb='blue' # dmenu background color
-dmenusf='blue' # selected item foregound
-dmenusb='white' # selected item background
-#RGB, #RRGGBB, and X color names are supported
-
-# yad selection dialog height. default values are optimal for mint cinnamon, adjust per your needs
-peritem='23'
-minimum='84'
-
-# foreground & background colors for yad list items (parent dir, subdirs, normal and hidden files)
-yparent=('red' 'white')
-yfolder=('blue' 'white')
-ycnfdir=('lightgray' 'white')
-yfnames=('green' 'white')
-yhidden=('gray' 'white')
-
-yadfile='0' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
-yadform='1' # use yad to process forms (when template have front-matter vars or dynamic questions)
+# FILE SELECTION SETTINGS
 
 maxsize='3' # file selection will only show files up to X MB
 # you can still pass a bigger file via -R or 1st non-opt arg
 showall='0' # show hidden directories and files (be careful)
 listord=('e' 'p' 's' 'f' 'c' 'h') # list order (e/p/s/f/c/h)
 # empty line, parent, subdirs, files, confdirs, hidden files
+
+# EXECUTION SETTINGS
+
 execute='1' # if enabled files with +x permission are called
 # directly, otherwise, are called through bash (bash <file>)
 checkpt='1' # use '@' to mark the end of a template file and
 # strip it after processing (or blank lines will be removed)
 runeval="0" # substitute environment vars using eval command
 # if disabled envsubst is used (+secure, but strip newlines)
-timeout='10' # the timeout for each directory/file selection
-# the timeout is valid only for 'yad' file selection dialogs
+
+# UTILITIES SETTINGS
+
+yadfile='0' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
+yadform='1' # use yad to process forms (when template have front-matter vars or dynamic questions)
+yademsg='0' # use yad to display error messages in dialogs (1 to enable, 0 disables and use dmenu)
+yadicon='0' # display 'accessories-text-editor' gtk-icon on yad dialog (0 to disable, 1 to enable)
+# you can set a custom gtk-icon name, or even set a custom icon! (preferably use an absolute path)
+
+# CLIPBOARD SETTINGS
 
 clipboardterminal='clipboard' # this clipboard/X-area is used when pasting data to terminal window
 clipboarddefault='clipboard' # and this one for the other windows (and when 'focusit' is disabled)
@@ -97,13 +81,54 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 # 'xdotool key ctrl+shift+v' # recommended(*) alternative to paste on terminal if using clipboard!
 # 'eval cat $1' # "paste" to stdout without xdotool (or pass '-p 0' and data will be in clipboard)
 
-# (*) IMPORTANT
+# (*)IMPORTANT
 # paste from primary with 'xdotool click 2' will paste to window under your MOUSE CURRENT POSITION
 # while pasting from clipboard, reXply (tries to) paste at same window that were initially active!
 # so I personally recommend always use clipboard and adjust only the paste command as necessary :)
 
-# LAST NOTE
-# all these settings can be overwritten by an additional configuration file at reply-data/.cfg/cfg
+# DMENU SETTINGS
+
+bottoms='1' # display dmenu at bottom of screen (disable to display at top, can't be more obvious)
+vertlis='30' # display dmenu items in a vertical list, with X lines. set 0 to display horizontally
+preview='1' # display a "live preview" of front-matter fields to-be/processed, bellow dmenu inputs
+# note: the preview lines are "filtered" as you type and will eventually disappear: once the input
+# text do not match any of them! If it is a problem (you often ends up selecting an existing item)
+# you can add a field 'preview:false' to disable field preview for a particular file. the same way
+# you can add a field 'preview:true' to enable field it for a particular file if globally disabled
+# or just get used to hit shift+enter to submit what you have typed in instead 'select' an option!
+seetips='1' # display tips about dmenu shortcuts below input fields (when processing front-matter)
+toupper='1' # display preview/tips using only uppercase letters, preventing it matches your input
+
+# DMENU COLORS
+
+dmenunf='white' # dmenu foregound color
+dmenunb='blue' # dmenu background color
+dmenusf='blue' # selected item foregound
+dmenusb='white' # selected item background
+#RGB, #RRGGBB, and X color names are supported
+
+# YAD SETTINGS
+
+# yad selection dialog height. default values are optimal for mint cinnamon, adjust per your needs
+peritem='23'
+minimum='84'
+
+timeout='10' # the timeout for each directory/file selection
+# the timeout is valid only for 'yad' file selection dialogs
+
+# YAD COLORS
+
+# foreground & background colors for yad list items (parent dir, subdirs, normal and hidden files)
+yparent=('red' 'white')
+yfolder=('blue' 'white')
+ycnfdir=('lightgray' 'white')
+yfnames=('green' 'white')
+yhidden=('gray' 'white')
+
+# A LAST NOTE
+
+# all these settings can be overwritten by an additional configuration file at ~/reply/rexply.cfg
+# it's RECOMMENDED you copy your settings to there, as this file is overwritten on script updates
 
 # THAT'S IT, STOP EDITING!
 
@@ -213,8 +238,17 @@ log() {
 	return $lexit
 }
 
+icons() {
+	case $yadicon in
+		0) ;;
+		1) echo "--image='accessories-text-editor'" ;;
+		*) echo "--image=$yadicon" ;;
+	esac
+	return 0
+}
+
 yform() {
-	yad --form --title="reXply" --width="580" --borders="20" --on-top --center --image='accessories-text-editor' --separator="|" --button="gtk-ok" $@ 2>>$logfile
+	yad --form --title="reXply" --width="580" --borders="20" --on-top --center $(icons) --separator="|" --button="gtk-ok" $@ 2>>$logfile
 }
 
 yadform() {
@@ -330,8 +364,8 @@ yadform() {
 yerror() {
 	local yexit=$?
 	log "Error: $@ ($yexit)"
-	if [[ "$yadform" == "1" ]]; then
-		yad --image "dialog-error" --width="180" --title="reXply failed" --text="Error: $@ ($yexit)"
+	if [[ "$yademsg" == "1" ]]; then
+		yad --image="dialog-error" --width="450" --title="reXply failed" --text="Error: $@ ($yexit)"
 	else
 		echo -e "\nError: $@ ($yexit)\n\n" | dmenu -b -nf white -nb red -sf white -sb red -l 10 -p "reXply"
 	fi
@@ -750,7 +784,12 @@ vchanges() {
 
 	https://github.com/renatofrota/rexply
 
-	v0.1.5 - 2017-10-10
+	v0.1.6 - 2017-10-10
+		[*] reorganized settings area in rexply.bash, fixed some typos and rexply.cfg path
+		[+] added \$yademsg to control if yad or dmenu is used to display error messages dialogs
+		[+] added \$yadicon to choose wheter an icon is displayed on yad forms or not (a custom icon can also be set)
+
+	v0.1.5 - 2017-10-08
 		[+] added \$seetips option (splitting \$preview=1 or 2 in individual configuration variables!)
 		[+] added \$toupper option (uppercase all letters in dmenu lines to prevent matching input data)
 		rev.b:

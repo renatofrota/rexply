@@ -3,7 +3,7 @@ reXply is a handy tool to copy/paste replies and scripts with an advanced front-
 
 ## Current version
 
-v0.1.5c - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L753)
+v0.1.6 - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L787)
 
 ## Dependencies
 
