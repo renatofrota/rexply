@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.6"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -192,7 +192,7 @@ process() {
 	questions="0"
 	declare -A questiontitles
 	ifs "n"
-	for questiontitle in $(echo "$txt" | grep -oE '\{\{\?[^\?]*\?\}\}' | sed -e 's,{{?\([^?]*\)?}},\1,'); do
+	for questiontitle in $(echo "$txt" | grep -oE '\{\{\?[^\}]*\}\}' | sed -e 's,{{?\([^}]*\)}},\1,'); do
 		if ( ! inarray questiontitles "$questiontitle" ); then
 			header="$(echo -e "${header}\nentry:question_$questions!$questiontitle:")"
 			questiontitles[$questions]="$questiontitle"
@@ -209,7 +209,7 @@ process() {
 		ifs "n"
 		if [[ "$questions" != 0 ]]; then
 			for questiontitle in ${!questiontitles[@]}; do
-				txt=$(echo "$txt" | sed -e "s,{{?${questiontitles[$questiontitle]}?}},\${rexply_question_${questiontitle}},")
+				txt=$(echo "$txt" | sed -e "s,{{?${questiontitles[$questiontitle]}}},\${rexply_question_${questiontitle}},")
 			done
 		fi
 		ifs "r"
@@ -327,7 +327,7 @@ yadform() {
 			fi
 		done
 	done
-	if [[ "$yadform" == "1" ]]; then
+	if [[ "$yadform" == "1" ]] && [[ "${#yadfields[@]}" -gt "0" ]]; then
 		ifs "p"
 		yform=($(yform ${yadfields[@]}))
 		[[ $? == 0 ]] || { log "Notice: aborted" || backwindow || exit $? ; }
@@ -788,6 +788,9 @@ vchanges() {
 		[*] reorganized settings area in rexply.bash, fixed some typos and rexply.cfg path
 		[+] added \$yademsg to control if yad or dmenu is used to display error messages dialogs
 		[+] added \$yadicon to choose wheter an icon is displayed on yad forms or not (a custom icon can also be set)
+		rev.b:
+		[*] do not init yad when front-matter has no variables that asks for user input
+		[*] updated dynamic questions syntax to match {{?this}} as well (no ending '?')
 
 	v0.1.5 - 2017-10-08
 		[+] added \$seetips option (splitting \$preview=1 or 2 in individual configuration variables!)

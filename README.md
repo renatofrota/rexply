@@ -88,7 +88,7 @@ You can add questions that will be dynamically replaced during text processing.
 Hello, {{?Friend's name?}}! How are you going today?
 ```
 
-When pasting this template, you will be asked "Friend's name".
+When pasting this template, you will be asked "Friend's name?" (the last `?` is not part of dynamic questions syntax, it's part of the question itself).
 
 ### Front-matter powered templates
 
