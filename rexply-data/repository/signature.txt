@@ -1,0 +1,6 @@
+---
+combo:greeting!Greeting:Sincerely!Regards!Thank you
+entry:name!Name:John Doe
+---
+${greeting},
+${name}

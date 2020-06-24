@@ -1,0 +1,22 @@
+---
+preview:true
+entry:field_repetitive!Repetitive issues (trends):You can jump to next field by pressing tab.
+entry:field_mightreoccur!Issues that might reoccur:And break lines with '\n' in entry fields.
+txt:field_suggestions!Suggestions:While in textareas, you need ctrl+tab to jump fields.
+txt:field_other!Other:And can break lines by\njust hitting enter/return.
+---
+1. Repetitive or reoccurring issues:
+
+${field_repetitive}
+
+2. Cases that I believe might reoccur for other clients/services:
+
+${field_mightreoccur}
+
+3. Suggestions:
+
+${field_suggestions}
+
+4. Other:
+
+${field_other}

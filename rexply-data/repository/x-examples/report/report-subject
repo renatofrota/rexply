@@ -1,4 +1,0 @@
----
-runeval:true
----
-Report - $(printf "%.2d" $(echo $(date +%d)-1 | bc)).$(date +%m.%Y) - renato.frota

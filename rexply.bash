@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
-version="0.1.6"
-revision="b"
+version="0.1.7"
+revision="a"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -45,8 +45,8 @@ waitbit='0.3' # [fraction of] seconds to wait after pasting (prevents pasting/sc
 maxsize='3' # file selection will only show files up to X MB
 # you can still pass a bigger file via -R or 1st non-opt arg
 showall='0' # show hidden directories and files (be careful)
-listord=('e' 'p' 's' 'f' 'c' 'h') # list order (e/p/s/f/c/h)
-# empty line, parent, subdirs, files, confdirs, hidden files
+listord=('e' 'f' 'h' 's' 'c' 'p') # list order (c,e,f,h,p,s)
+# confdirs, empty line, files, hidden files, parent, subdirs
 
 # EXECUTION SETTINGS
 
@@ -55,15 +55,19 @@ execute='1' # if enabled files with +x permission are called
 checkpt='1' # use '@' to mark the end of a template file and
 # strip it after processing (or blank lines will be removed)
 runeval="0" # substitute environment vars using eval command
-# if disabled envsubst is used (+secure, but strip newlines)
+# when disabled envsubst is used (more secure, no subshells)
+# you can enable eval for a specific template with runeval:1
 
 # UTILITIES SETTINGS
 
-yadfile='0' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
+yadfile='1' # use yad to process file/directory selection - disable to use dmenu instead (lighter)
 yadform='1' # use yad to process forms (when template have front-matter vars or dynamic questions)
-yademsg='0' # use yad to display error messages in dialogs (1 to enable, 0 disables and use dmenu)
+yademsg='1' # use yad to display error messages in dialogs (1 to enable, 0 disables and use dmenu)
 yadicon='0' # display 'accessories-text-editor' gtk-icon on yad dialog (0 to disable, 1 to enable)
-# you can set a custom gtk-icon name, or even set a custom icon! (preferably use an absolute path)
+# you can pass another gtk-icon name or set your own custom icon (preferably use an absolute path)
+
+[[ "$OSTYPE" == "darwin" ]] && yadfile='0' && yadform='0' && yademsg='0'
+# dmenu is apparently easier to install in OSX than yad (I have no OSX!)
 
 # CLIPBOARD SETTINGS
 
@@ -83,7 +87,7 @@ pastedefault='xdotool key ctrl+v' # command to paste (when reXply is initiated o
 
 # (*)IMPORTANT
 # paste from primary with 'xdotool click 2' will paste to window under your MOUSE CURRENT POSITION
-# while pasting from clipboard, reXply (tries to) paste at same window that were initially active!
+# while pasting from clipboard, reXply (tries to) paste to the same window that was active on init
 # so I personally recommend always use clipboard and adjust only the paste command as necessary :)
 
 # DMENU SETTINGS
@@ -97,7 +101,7 @@ preview='1' # display a "live preview" of front-matter fields to-be/processed, b
 # you can add a field 'preview:true' to enable field it for a particular file if globally disabled
 # or just get used to hit shift+enter to submit what you have typed in instead 'select' an option!
 seetips='1' # display tips about dmenu shortcuts below input fields (when processing front-matter)
-toupper='1' # display preview/tips using only uppercase letters, preventing it matches your input
+toupper='1' # display preview/tips using only uppercase letters (preventing it matches your input)
 
 # DMENU COLORS
 
@@ -113,7 +117,7 @@ dmenusb='white' # selected item background
 peritem='23'
 minimum='84'
 
-timeout='10' # the timeout for each directory/file selection
+timeout='0' # the timeout for each directory/file selection
 # the timeout is valid only for 'yad' file selection dialogs
 
 # YAD COLORS
@@ -182,6 +186,7 @@ process() {
 	txt="$(cat -)";
 	literal="1"
 	lines="$(cat "$1" | wc -l)" || yerror "unable to read file: $1" || exit $?
+	fname=$1
 	if [[ $lines -le 1 ]]; then
 		enter=""
 	else
@@ -248,7 +253,7 @@ icons() {
 }
 
 yform() {
-	yad --form --title="reXply" --width="580" --borders="20" --on-top --center $(icons) --separator="|" --button="gtk-ok" $@ 2>>$logfile
+	yad --form --title="$(basename $fname)" --width="580" --borders="20" --on-top --center $(icons) --separator="|" --button="gtk-ok" $@ 2>>$logfile
 }
 
 yadform() {
@@ -590,7 +595,7 @@ selectfile() {
 		1) log "Notice: aborted by user" || backwindow || exit $? ;;
 		70) yerror "timeout" || exit $? ;;
 		252) log "Notice: aborted by user" || backwindow || exit $? ;;
-		*) log "Unknow error: dmenu returned status code $?" || backwindow || exit $? ;;
+		*) log "Unknow error: dir/file selection returned status code $?" || backwindow || exit $? ;;
 	esac
 	name=$(echo $name | sed 's,|$,,')
 	if [[ "$name" == " " ]]; then
@@ -631,24 +636,23 @@ showhelp() {
 
 	Parameters:
 
-	-a X
+	-a 0|1
 		show All files (including hidden directories/files)
 		directories/files starting with a dot (like .dir or .file) will be displayed
 		0 to disable, 1 to enable
 		current default: $showall
 
-	-b X
+	-b 0|1
 		Backup clipboard data
 		0 to disable, 1 to enable
 		current default: $cbackup
 
-	-B X
-		place selection menu at Bottom of screen menu
+	-B 0|1
+		place dmenu at bottom of screen
 		0 to disable, 1 to enable
-		note: needs \$yadfile='0' or -l 1 to take effect
 		current default: $bottoms
 
-	-c X
+	-c 0|1
 		copy processed data to clipboard
 		0 to disable, 1 to enable
 		current default: $copytoc
@@ -656,30 +660,29 @@ showhelp() {
 	-C
 		view full Changelog
 
-	-d X
-		Delete the tmp file (i.e.: delete it) after reply is processed/pasted
+	-d 0|1
+		Delete the tmp file after reply is processed/pasted
 		0 to disable, 1 to enable
 		current default: $deltemp
 
-	-D X
+	-D 0|1
 		check Dependencies
 		0 to disable, 1 to enable
 		current default: $deptest
 
-	-e X
+	-e 0|1
 		vErtical listing
 		0 to disable, 1 to enable
-		note: needs \$yadfile='1' or -l 1 to take effect
 		current default: $vertlis
 
-	-E X
-		run eval
-		process templates using 'eval'. if disabled, only 'envsubst' is used
+	-E 0|1
+		process templates using eval (envsubst when disabled)
+		envsubst do not run subshells (some additional security)
+		may still be enabled individually in templates with 'runeval:1'
 		0 to disable, 1 to enable
-		note: envsubst won't run subshells (more secure) but you lose linebreaks
 		current default: $runeval
 
-	-f X
+	-f 0|1
 		Focus the originally active window before pasting
 		(prevents unwanted pastes to 'always-on-top' windows)
 		0 to disable, 1 to enable
@@ -688,30 +691,30 @@ showhelp() {
 	-h
 		Show this help message
 
-	-k X
+	-k 0|1
 		Remove cheKpoints ('@' at the end of template files)
 		0 to disable, 1 to enable
 		current default: $checkpt
 
-	-m XX
+	-m 1..99
 		Maximum file size to display (in megabytes)
 		integer value (1, 5, 10, ...)
 		current default: $maxsize
 
-	-p X
+	-p 0|1
 		Paste the reply
+		note: if disabled implies -r 0 (do not restore original clipboard)
 		0 to disable, 1 to enable
-		note: implies -r 0 (do not Restore original clipboard)
 		current default: $pasteit
 
 	-P 'command \$1'
 		set the Paste command (for both terminal and regular windows)
-		yhe variable '\$1' represents the tmpfile holding the processed data
+		the variable '\$1' represents the tmpfile holding the processed data
 		you will probably want to use single quotes and parse it using 'eval'
 		note: implies -p 1 (enable pasting)
 		example: -P 'eval cat \$1'
 
-	-r X
+	-r 0|1
 		Restore original clipboard data after reply is processed/pasted
 		0 to disable, 1 to enable
 		current default: $restore
@@ -728,10 +731,9 @@ showhelp() {
 
 		current default: $replies
 
-	-t XX
-		Timeout in seconds
+	-t 0..99
+		Timeout in seconds for file selection (yad only)
 		integer value, 0 to disable
-		note: needs -l 0, -s 0, to take effect
 		current default: $timeout
 
 	-v
@@ -740,30 +742,28 @@ showhelp() {
 	-V
 		Show release notes
 
-	-w X.X
+	-w 0.n
 		Wait time (in seconds) after pasting (prevent pasting interruption)
-		integer/float (0.1, 0.5, 1, ...)
+		accepts integer or float (0.1, 0.5, 1, ...)
 		current default: $waitbit
 
 	-x
 		set x bit on process execution for debug
 
-	-X X
+	-X 0|1
 		eXecute file directly
 		if the file is executable and this is enabled, execute the file directly instead calling 'bash <file>'
 		0 to disable, 1 to enable
 		current default: $execute
 
-	-y X
-		Yad file selection interface
-		Use 'yad' fancy dialogs for file selections instead 'dmenu'
-		0 to disable, 1 to enable
+	-y 0|1
+		File selection interface
+		0 to dmenu, 1 to yad
 		current default: $yadfile
 
-	-Y X
-		Yad Forms
-		Use 'yad' forms to insert template's front-matter variables
-		0 to disable, 1 to enable
+	-Y 0|1
+		Form filling interface
+		0 to dmenu, 1 to yad
 		current default: $yadform
 "
 }
@@ -783,6 +783,11 @@ vchanges() {
 	$head
 
 	https://github.com/renatofrota/rexply
+
+	v0.1.7 - 2020-06-24
+		[*] changed default app for dir/file selection and error messages to yad (from dmenu)
+		[*] moved files above subdirs in dir/file selection dialogs
+		[*] new sample data
 
 	v0.1.6 - 2017-10-10
 		[*] reorganized settings area in rexply.bash, fixed some typos and rexply.cfg path

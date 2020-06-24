@@ -1,0 +1,22 @@
+---
+yadform:1
+# always use yad to process this file
+
+entry:customer!Customer name:Customer
+
+txt:code:SetEnvIf X-Forwarded-Proto https HTTPS=on\nSetEnvIf X-Forwarded-Proto https SERVER_PORT=443
+# \n inserts a line break - only works in yad
+
+num:minutes!Time to take effect (in minutes):10!0..20!5
+---
+Hello ${customer},
+
+Thanks for getting in touch with us.
+
+To resolve this problem I've added this code to [b]public_html/.htaccess[/b] file on your account:
+
+[code]${code}[/code]
+
+This change should reflect in aproximately ${minutes} minutes on your end.
+
+@

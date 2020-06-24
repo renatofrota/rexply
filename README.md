@@ -3,7 +3,7 @@ reXply is a handy tool to copy/paste replies and scripts with an advanced front-
 
 ## Current version
 
-v0.1.6 - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L787)
+v0.1.7 - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L784)
 
 ## Dependencies
 
@@ -27,7 +27,7 @@ git clone https://github.com/renatofrota/rexply.git && \
 rexplylink=$(echo $PATH|cut -d: -f1)/rexply && \
 { [ ! -f $rexplylink ] && sudo ln -s ~/rexply/rexply.bash $rexplylink ; }; \
 [ ! -f $(echo $PATH|cut -d: -f1)/rexply ] && echo problem creating symlink || \
-echo "all done! now assign a keybinding to call 'rexply' on your O.S. ;)"
+echo "done! now run 'rexply' once and then set a keyboard shortcut to call 'rexply' ;)"
 ```
 
 ## Upgrading
@@ -59,7 +59,7 @@ But it is only **1% as useful as it could be** by running it this way. To feel t
 1. add the custom command `rexply` to your Keyboard shortcuts/keybindings area;
 2. bind a key to the custom command you've created
 3. go to an editor, browser, or any other text area field
-4. press the binded key and be amazed!
+4. press the shortcut and be amazed!
 
 ## Make it dance in your rhythm
 
@@ -67,14 +67,14 @@ The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`.
 
 You can just create more folders/files there (or change default repository in rexply.cfg).
 
-The files can be:
+The files may be:
 
 - regular text files
 - text with dynamic questions
-- front-matter powered templates
-- "evaluated" (processed with `eval`)
-- bash scripts (executable scripts - preferably with `#!/bin/bash` hashbang)
-- or any other binary/executable script/application (after enabling `$execute`)
+- 'front-matter powered' templates
+- evaluated (processed with `eval`)
+- bash scripts (a hashbang at the top of the file is recommended, e.g.: `#!/bin/bash`)
+- or any other binary/executable script/application (may be disallowed passing `-X 0` or setting `$execute='0'`)
 
 ### Text files
 
@@ -180,7 +180,7 @@ Note: variables in format `$variable` (without `{}`) are parsed as environment v
 They accept `0`/`1`, like the config vars themselves, aliases like `true`/`false`, `yes`/`no`, and some others (check rexply.bash code if you're curious).
 
 1. `yadform` or `editor` (overrides `$yadform`)
-2. `preview` (accepts `0`,`1`,`2`)
+2. `preview`
 3. `runeval`
 
 #### Specifics of each _form-filling_ utility
@@ -229,25 +229,21 @@ Be careful. Your homedir is the initial working directory when you start reXply 
 
 Please note:
 
-1. if the file is not executable, no matter the extension, it will be processed as a regular text template.
-2. the files are not executed directly by default (`$execute='0'`), they are called through `bash`, like this: `bash <file>`.
-3. If you enable `$execute` or pass `-X 1` the file will be executed **direcly**, making reXply act as a truly and independent "launcher" for your applications/scripts.
+1. if the file is not executable, no matter it's extension, it will be processed as a regular text template.
+2. when `$execute='0'` (or `-X 0`) the files are not executed directly but through `bash` like this: `bash <file>`).
+3. when `$execute='1'` (or `-X 1`) the files are executed **directly**, making reXply act as a "launcher" for your applications/scripts (current default).
 
 I recommend you add `#!/bin/bash` hashbang at the top of the file and use `.bash` or `.sh` extension so your text editors also know they are shell executable files - and they keep being properly executed if you enable `$execute`.
 
 ## More information
 
-reXply will, by default:
+By default, reXply will send the keystroke `Ctrl+Shift+V` to paste commands to terminal (it recognizes `terminal|terminator|tilix|tmux|tilda|guake` in cmdline of active window when it's initialized). If you have customized the paste command to something else in your terminal, e.g.: `Ctrl+V`, like me), you can pass `-P 'command $1'` (where `$1` represents the file holding the processed text) or modify the parameter `$pasteterminal` directly in config/script files.
 
-- [x] hide directories and files preceded by a dot (e..g: `.filename`) - `$showall='0'`
-- [x] disallow browsing to parent directories outside it's default repository - `$breakit='0'`
-- [x] hide form list any file bigger than a pre-defined size limit (default: 3MB) - `$maxsize='3'`
-- [x] prevent execution of arbitrary executables (call executables using `bash $filename`) - `$bashit='1'`
+Script settings can be modified by 3 forms (in the order it takes precedence):
 
-All these restrictions are due to security concerns and can be modified by either:
-
-- modifying the rexply file directly (`$HOME/rexply/rexply.bash`); or
-- modifying the additional config file (`$HOME/rexply/rexply.cfg`)
+- passing parameters to `reply` command; or
+- modifying the additional config file (`$HOME/rexply/rexply.cfg`); or
+- modifying the rexply file directly (`$HOME/rexply/rexply.bash`);
 
 We will avoid updating the additional config file but _take your backups before updating_, please.
 
@@ -260,7 +256,7 @@ We will avoid updating the additional config file but _take your backups before 
 
 ## More info regarding the dependencies
 
-- `dmenu` is the standard application used to output information and capture input due to it's more widespread presence - including availability on OSX via Homebrew, etc. If you want more fancy visual, with screen-centered dialogs, ability to fill in all front-matter variables of a template in a single - floating window - form, set options `$yadfile` (file selection) and `$yadform` (front-matter form) to `1` (or run `rexply -y 1 -Y 1`) so you can use `yad` instead.
+- `dmenu` is the standard application used to output information and capture input in OSX due to it's more widespread presence - including availability via Homebrew. If you want more fancy visual, with screen-centered dialogs, ability to fill in all front-matter variables of a template in a single - floating window - form, set options `$yadfile` (file selection) and `$yadform` (front-matter form) to `1` (or run `rexply -y 1 -Y 1`) so you can use `yad` instead.
 - `xclip` may be substituted with `xsel` (see `$copycmd` option) or `pbcopy` and `pbpaste` - useful in OSX, I just had no time to test yet, so it may need some polishing.
 - `xdotool` is used to handle the window focus (and apparently, it's not that easy to make it work on OSX due to `XTEST` not being active by default). You can get rid of this dependency by disabling `$focusit` option. A possible problem if you are using the script to paste data (with `xclip` or `xsel`) while another window is set as _'always-on-top'_: the data will sometimes end up being pasted to the window set as _'always-on-top'_ instead the desired window (depends on the application and other circumstances - not tested on OSX yet).
 
@@ -272,6 +268,10 @@ If you want to try automatic pasting, there are 2 ways to implement it:
 
 1. set `$pastedefault='eval cat $1'` and `$pasteterminal='eval cat $1'` (or just pass `-P 'eval cat $1'` parameter) - **note the single quotes** - and pipe reXply to whichever program you want to use to handle the data in sequence. Just as an example, at least theoretically, piping the output to `pbcopy` (e.g.: `rexply -P 'eval cat $1' | pbcopy`) the data will be copied to clipboard (as reXply does by default) and you can paste it manually. I could not test (pbcopy not available in my Linux distro and `xclip`/`xsel` handles input buffer a bit differently). Feel free to try this and other ways to parse the output :)
 2. there's another option: disable automatic pasting with `$pasteit='0'` (what is default for OSX) and also set it to keep the _tmpfile_ after processed (`$deltemp='0'` or `-d 0`), then use the processed data saved at _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own way.
+
+## Contributing
+
+When contributing (pull requests), please do not push your local rexply.cfg changes (`git update-index --skip-worktree rexply.cfg`).
 
 ## Donate
 
