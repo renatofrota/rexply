@@ -1,7 +1,7 @@
 #!/bin/bash
 # reXply
 version="0.1.8"
-revision="a"
+revision="b"
 # version number not updated on minor changes
 # @link https://github.com/renatofrota/rexply
 
@@ -479,11 +479,9 @@ pasteit() {
 }
 
 instdeps () {
-	[[ ! -d "$HOME/.rexply" ]] && {
-		mkdir -p "$HOME/.rexply"
-		cp -Rv ./replies ~/.rexply/
-		cp -v ./rexply.cfg ~/.rexply/
-	}
+	[[ ! -d "$HOME/.rexply" ]] && mkdir -p "$HOME/.rexply"
+	[[ ! -d "$HOME/.rexply/replies" ]] && cp -Rv $rexplydir/replies ~/.rexply/
+	[[ ! -f "$HOME/.rexply/rexply.cfg" ]] && cp -v $rexplydir/rexply.cfg ~/.rexply/
 	echo -e "Running install script - installing dependencies\n"
 	errors='0'
 	apps=('yad' 'dmenu' 'xdotool' 'xclip' 'xsel' 'wmctrl' 'pbcopy' 'pbpaste')
