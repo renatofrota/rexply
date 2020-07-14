@@ -1,0 +1,6 @@
+---
+yadform:1
+bashcmd:1
+select:command!Application:Navigator.Firefox firefox!code.Code code!gnome-calculator.Gnome-calculator gnome-calculator
+---
+~/rexply/raise-or-run.bash ${command}

@@ -3,69 +3,59 @@ reXply is a handy tool to copy/paste replies and scripts with an advanced front-
 
 ## Current version
 
-v0.1.7 - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L784)
-
-## Dependencies
-
-- `dmenu` and/or `yad`
-- `xclip` and/or `xsel` and/or `pbcopy`+`pbpaste`
-- `xdotool` (optional but strongly recommended)
+v0.1.8 - [View changelog](https://github.com/renatofrota/rexply/blob/master/rexply.bash#L850)
 
 More info regarding these dependencies at the end of this file.
 
-## How to install
+## Installation
 
-1. install as more dependencies as you can on your system (recommended: `dmenu`, `yad`, `xclip`, `xdotool`)
-2. clone this repo
-3. symlink the binary in a folder in your $PATH
+First, clone this GitHub repo:
 
-If you are unsure, just copy and paste on your terminal (the script will try to install the dependencies - if you're using Linux):
+```cd ~ && git clone https://github.com/renatofrota/rexply.git```
 
-```
-cd ~/ && \
-git clone https://github.com/renatofrota/rexply.git && \
-rexplylink=$(echo $PATH|cut -d: -f1)/rexply && \
-{ [ ! -f $rexplylink ] && sudo ln -s ~/rexply/rexply.bash $rexplylink ; }; \
-[ ! -f $(echo $PATH|cut -d: -f1)/rexply ] && echo problem creating symlink || \
-echo "done! now run 'rexply' once and then set a keyboard shortcut to call 'rexply' ;)"
-```
+Then, symlink the binary from a folder in your $PATH. e.g.:
+
+```cd ~/bin && ln -s ~/rexply/rexply.bash rexply```
+
+(assuming `$HOME/bin` is in your `$PATH`)
+
+To install dependencies, create and initialize .rexply config dir:
+
+```rexply -I```
+
+If you use `Ctrl+V` to paste data to terminal (instead default `Ctrl+Shift+V`) like me:
+
+```echo "pasteterminal='xdotool key ctrl+v'" >> ~/.rexply/rexply.cfg```
+
+## Dependencies
+
+All these may be istalled automatically just by running `rexply -I`:
+
+- `yad` and/or `dmenu`
+- `xclip` and/or `xsel` and/or `pbcopy`+`pbpaste`
+- `xdotool` (optional - strongly recommended)
+- `wmctrl` (optional)
 
 ## Upgrading
 
-1. download and extract the zip or clone the repo to an alternative location
-2. copy everything over your existing install (except rexply.cfg)
-
-If you are unsure, just copy and paste on your terminal:
-
-```
-OLD_IFS=$IFS && IFS=$'\n' && cd ~/ && echo -n "Downloading..." && \
-wget -q -O rexply.zip https://github.com/renatofrota/rexply/archive/master.zip && \
-echo -en "\nExtracting..." && sleep 1 && unzip -q -o rexply.zip && mkdir -p rexply && \
-echo -en "\nCopying over..." && sleep 1 && for dir in $(find rexply-master/ -type d); \
-do mkdir -p "$(echo $dir | sed 's,^rexply-master,rexply,')"; done && \
-for file in $(find rexply-master -type f ! -name rexply.cfg); \
-do cp "$file" "$(echo $file | sed 's,^rexply-master,rexply,')"; done && \
-echo && read -rep "Reinstall rexply.cfg file? [y/n]: " -n 1 reinstall && \
-{ if [[ "$reinstall" =~ (1|y|Y|s|S) ]]; then cp rexply-master/rexply.cfg rexply/; fi ; } && \
-rm -rf rexply-master rexply.zip && echo "All done!" && IFS=$OLD_IFS
-```
+1. If you are using reXply below 0.1.8 and replies repository location is within reXply's directory, copy replies repository out of reXply's directory: `mkdir -p ~/.rexply ; cp -Rv ~/rexply/replies ~/.rexply/`
+1. clone new version `cd ~ && rm -rf rexply && git clone https://github.com/renatofrota/rexply.git`
 
 ## Operation
 
-It works from command line (terminal) - just type in 'rexply'.
+It works from command line (terminal) - just type `rexply`. However it becomes much more great and useful after you:
 
-But it is only **1% as useful as it could be** by running it this way. To feel the power:
-
-1. add the custom command `rexply` to your Keyboard shortcuts/keybindings area;
-2. bind a key to the custom command you've created
-3. go to an editor, browser, or any other text area field
-4. press the shortcut and be amazed!
+1. go to control panel > keyboard > shortcuts
+1. add the command `rexply` to custom shortcuts
+1. bind a key to the custom command you've created (e.g.: ctrl+space or ';')
+1. go to an editor, browser, or any other text area field and...
+1. press the shortcut!
 
 ## Make it dance in your rhythm
 
-The default replies/scripts repository is `$HOME/rexply/rexply-data/repository`.
+The default replies/scripts repository is `$HOME/rexply/replies` (or `$HOME/.rexply/replies` if you followed all install steps above).
 
-You can just create more folders/files there (or change default repository in rexply.cfg).
+You can create more dirs and files inside the repository.
 
 The files may be:
 
@@ -78,7 +68,7 @@ The files may be:
 
 ### Text files
 
-No secrets on this. I just recommend you append .txt to the file names so your editors do not try to apply syntax highlighting based on file contents.
+No secrets on this. You may want (or not) to append .txt to the file names so your editors do not try to apply syntax highlighting based on file contents.
 
 ### Dynamic questions
 
@@ -96,17 +86,18 @@ Create a section with some variables at the top of the file (surround the variab
 
 ```
 ---
-#vartype:varname!Field Label:default value
-#field label and default value are optional
-entry:customer!Customer name:
-txt:code!Code used to fix
-num:minutes!Time to take effect (in minutes):10!0..20!5
+var:customer!Customer name:
+cbo:end!Reason of problem:our end!your end
+txt:code!Code used to fix:if ($condition == "met") {\n\tdo this;\n}
+num:minutes!Minutes to take effect:10!0..20!5
 ---
 Hello ${customer},
 
 Thanks for getting in touch with us.
 
-To resolve this problem I've added this code to [b]public_html/.htaccess[/b] file on your account:
+This was caused by a problem on ${end}.
+
+I've now resolved it using this code:
 
 [code]${code}[/code]
 
@@ -115,85 +106,101 @@ This change should reflect in aproximately ${minutes} minutes.
 @
 ```
 
-When inserting this template, reXply will ask you to provide the data to the 3 variables:
+When inserting this template, reXply will ask you to provide the data before processing the template:
 
-- your customer's name
-- the _code_ you've used to resolve his problem
-- how many minutes it will take to reflect on his end
+1. your customer's name (empty field allowing any input);
+1. the source of the problem (combo with options "our end"/"your end" - allowing a custom input);
+1. the _code_ you've used to resolve the problem;
+1. the time it will take to make effect.
 
-After the variable name, you can add `:` and the default input for that variable. When no default is provided, variable name will be the default. To make default empty just add `:` and nothing else in front of it.
+After the variable name, you can add `:` and the default input for that variable. When no default is provided, variable name will be the default. To make default empty just add `:` and nothing after it (as the Customer's name in example above). You can enter line breaks and tabs to multiline fields (textarea) using `\n` and `\t` as in the example above, which will produce the default value:
+
+```
+if ($condition == "met") {
+  do this;
+}
+```
 
 If using `dmenu`, you will see an empty field with a 'selection' below (the default input). You can type any value or just hit enter to use the pre-selected option. One field at a time. Optionally, a preview of all the fields can be displayed underneath the selector (`$preview='1'`).
 
 If using `yad`, a form will be displayed, with all fields visible and editable simultaneously. Each field is pre-filled with the default value data (or the variable name, if you have set no default value). Numeric fields will have +/- buttons - and may be limited to the range you have defined. In the example above `!0..20!5` means _"a value between 0 to 20, in steps of 5"_. The "steps" are only for the +/- buttons (or up/down arrows): any value within the allowed range can be _manually_ entered.
 
-Oh, and the @ at the end is to confirm you want the 2 blank lines processed (any `@` at the very end of the template is removed during processing - if `$checkpt` is enabled, or `-k 1` is passed). Without it, the 2 lines would be discarded.
+The `@` at the end is to confirm you want the 2 blank lines processed (any `@` at the very end of the template is removed during processing by default). Without it, the 2 last lines would be discarded.
 
 #### Variables syntax
 
-The syntax for a front-matter variable is `vartype:varname[!var label][:][default value]`, where:
+The syntax for a front-matter variable is `vartype:varname[!var label][:[default value]]`, where:
 
-1. `vartype` - variable type (see types below) - _mandatory_
-2. `varname` - the name of the variable (used to perform the substitutions in template file) - _mandatory_
-3. `var label` - the label that is displayed in Dmenu/Yad forms that field
-4. `the colon sign` - to indicate a default value follows
-5. `default value` - the default value for the variable
-
-The last 3 are optional.
+- `vartype` - variable type (see types below) - _mandatory_
+- `varname` - variable name (used to perform the substitutions in template file) - _mandatory_
+- `var label` - variable label displayed in Dmenu/Yad forms (defaults to `varname`)
+- `the colon sign` - indicate a default value follows
+- `default value` - default value (may be empty)
 
 #### Data variables types
 
 Currently, 5 types of data variables are supported
 
-1. `entry`, `field`, `var` or `text` - single line input field
-2. `txt` or `textarea` - multiline (textarea) input field
-3. `num` or `numeric` - a field that only allow numbers [ with a default value [ a defined range of accepted values [ and a default stepping ] ] ] (`num:varname[:default[!MIN..MAX[!STEP]]]`)
-   - a default is specified as usual: `num:minutes:10`
-   - an accepted range is specific by appending `!MIN..MAX` (e.g.: `num:minutes:10!0..20`)
-   - the stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
-   - note: the acceptance of these settings depends on the application you use to process front-matter vars (`$yadform` or `-Y` parameter)
-     - **yad**
-       - accepts all parameters
-       - the visual +/- buttons and up/down keyboard arrows respect the range and stepping
-       - you can still manually type a value out of the range and/or disrespecting the stepping
-     - **dmenu**
-       - takes the default value
-       - discard all the rest
-4. `select` or `selectbox` - a field with a list of pre-defined values displayed as a selectbox item
-5. `combo` or `combobox` - like select field, but allows a custom value to be entered
+1. `entry`, `field`, `var` or `text` - single line
+1. `txt` or `textarea` - multiline
+1. `num` or `numeric` - only numbers (`num:varname[:default value[!MIN..MAX[!STEP]]]`)
+1. `select` or `selectbox` - list of options (`select:varname[:option 1[!option 2[!option 3[!...]]]]`)
+1. `combo` or `combobox` - like select field but allows custom values to be entered at runtime
+
+`num` (or `numeric`) field type allow additional configuration at `default value` position
+
+##### Numeric field type
+
+It accepts a default value [ ! a defined range of accepted values [ ! and a default stepping ] ] ] 
+
+- a default is specified as usual: `num:minutes:10`
+- the accepted range is specified by appending `!MIN..MAX` (e.g.: `num:minutes:10!0..20`)
+- the stepping comes after, also separated by `!` (e.g.: `num:minutes:10!0..20!5`)
+
+The acceptance of these settings depends on the application you use to process front-matter vars (`$yadform` or `-Y` parameter)
+
+- **yad**
+  - accepts all parameters
+  - the visual +/- buttons and up/down keyboard arrows respect the range and stepping
+  - a value disrespecting the stepping may be entered manually (min/max are respected)
+- **dmenu**
+  - takes a the default value
+  - disregard the rest (range and stepping)
 
 #### Keeping variables untouched
 
-You may want to display a `${variable}` in it's literal form (when it's part of the final command you want to run after template is processed). There are 2 ways to do this:
+You may want to display a `${variable}` in it's literal form (when it's part of the final command you want to run/paste after template is processed). There are 2 ways to do this:
 
 1. add an entry variable and set the default value to the variable string: `entry:variable:${variable}`
    - it will be displayed during front-matter processing - and you can override it (as any `entry` var)
-2. use the special front-matter command `keep`: `keep:variable`
-   - it won't be displayed during front-matter processing
+1. use the special front-matter command `keep`: `keep:variable`
+   - it won't be displayed during front-matter processing at all
 
-Note: variables in format `$variable` (without `{}`) are parsed as environment variables (they will "disappear" when pasting a template if they do not exist on your environment). Always use `${variable}` format (with `{}`).
+Note: variables in format `$variable` (without `{}`) are parsed from your environment variables.
 
 #### Front-matter overrides variables
 
-3 special front-matter variables can be used to override reXply options. Note: they must come before regular variables.
+Some special front-matter variables can be used to override reXply options. Note: they must come before regular variables.
 
 They accept `0`/`1`, like the config vars themselves, aliases like `true`/`false`, `yes`/`no`, and some others (check rexply.bash code if you're curious).
 
-1. `yadform` or `editor` (overrides `$yadform`)
-2. `preview`
-3. `runeval`
+- `preview`
+- `runeval`
+- `bashcmd`
+- `yadicon`
+- `yadform` (or `editor`)
 
 #### Specifics of each _form-filling_ utility
 
-- dmenu:
-  - Enter submit selection or input.
-  - Shift+enter to submit input.
-  - Ctrl+y to paste primary X selection ("mouse highlight")
-  - Ctrl+Y to paste clipboard
 - yad:
   - Regular shortcuts (enter submit, tab change field)
   - On multiline textareas, ctrl+tab to change field
-  - You cannot use `|` in provided data as it will break the field<->data association
+  - Note: you cannot enter `|` as it will break the field<->data association
+- dmenu:
+  - Enter submit selection or input
+  - Shift+enter to submit input
+  - Ctrl+y to paste primary X selection ("mouse highlight")
+  - Ctrl+Y to paste clipboard
 
 #### Comments within front-matter header
 
@@ -201,23 +208,23 @@ They accept `0`/`1`, like the config vars themselves, aliases like `true`/`false
 ---
 field:var_name:default value#this is a comment (variable is processed)
 #this line is also a comment. this method or above are valid and recommended
-this line is not a comment but parsing will fail: 'this' is not a valid variable type
+this line raises a warning for parsing failure ('this' is not a variable type)
 ---
 ```
 
 #### Front-matter tips:
 
 1. you can type `\\n` while filling in front-matter variables data - reXply will convert these to line breaks when pasting the data to your application.
-2. the preview lines (those displayed below `dmenu` when `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are *several* smarter ways to "fix" it without taking it hard):
+1. the preview lines (those displayed below `dmenu` when `$yadform='0'` (`-Y 0`), while processing a file with front-matter variables) are "filtered" as you type - and will eventually disappear: as soon as your data input do not match any of them. If it is a problem for you (you ends up selecting an existing item when trying to insert a data with shorter lenght to the next fields) you can resolve by one of the methods below (_"it's simple, I will disable preview in config"_, you may think at first - yes, it works, but there are *several* smarter ways to "fix" it without taking it hard):
    - use **shift+return** to submit to send your current input instead selected item
    - disable preview specifically for that template, by adding `preview:false` to it's front-matter;
    - change the order of variables in the front-matter (place variables that expects a _shorter **input** at the top_);
 
 ### Template evaluation (passing them through eval)
 
-You can add bash subshells `$()` on your file. These will be executed (**with your homedir as their initial working directory**) and their output will replace the subshell dynamically in the template (just like as any command you run in a terminal window).
+You can add bash subshells `$()` on your file. These will be executed (**with your homedir as their initial working directory** when reXply is called using a keyboard shortcut or your working directory when calling from terminal) and their output will replace the subshell dynamically in the template (just like as any command you run in a terminal window).
 
-Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_
+Environment variables like `${USER}`, `${PWD}`, etc are also replaced _even when outside `$()`_.
 
 Note: some consider eval dangerous (have you ever heard _eval is evil_?) so environment vars and front-matter vars substitutions are made using just `envsubst` by default - if you want to go evil way, I mean.. eval way, enable eval by setting `$runeval='1'`, passing `-E 1` parameter, or add `runeval:true` to template front-matter).
 
@@ -230,22 +237,29 @@ Be careful. Your homedir is the initial working directory when you start reXply 
 Please note:
 
 1. if the file is not executable, no matter it's extension, it will be processed as a regular text template.
-2. when `$execute='0'` (or `-X 0`) the files are not executed directly but through `bash` like this: `bash <file>`).
-3. when `$execute='1'` (or `-X 1`) the files are executed **directly**, making reXply act as a "launcher" for your applications/scripts (current default).
+1. when `$execute='0'` (or `-X 0`) the files are not executed directly but through `bash` like this: `bash <file>`).
+1. when `$execute='1'` (or `-X 1`) the files are executed **directly**, making reXply act as a "launcher" for your applications/scripts (current default).
 
 I recommend you add `#!/bin/bash` hashbang at the top of the file and use `.bash` or `.sh` extension so your text editors also know they are shell executable files - and they keep being properly executed if you enable `$execute`.
 
 ## More information
 
-By default, reXply will send the keystroke `Ctrl+Shift+V` to paste commands to terminal (it recognizes `terminal|terminator|tilix|tmux|tilda|guake` in cmdline of active window when it's initialized). If you have customized the paste command to something else in your terminal, e.g.: `Ctrl+V`, like me), you can pass `-P 'command $1'` (where `$1` represents the file holding the processed text) or modify the parameter `$pasteterminal` directly in config/script files.
+### Terminal
 
-Script settings can be modified by 3 forms (in the order it takes precedence):
+By default, reXply will send the keystroke `Ctrl+Shift+V` to paste commands to terminal (it recognizes `terminal|terminator|tilix|tmux|tilda|guake` in cmdline of active window when it's initialized). If you have customized the paste command to something else in your terminal (e.g.: `Ctrl+V`, like me), you can modify the parameter `$pasteterminal` in `rexply.cfg` file or pass `-P 'command $1'` (where `$1` represents the file holding the processed text).
+
+### dmenu
+
+dmenu dir/file selection menu attaches to the active window when reXply is launched, except in cases it's a terminal (application cmd line contains word `terminal`, `terminator`, `tilix`, `tmux`, `tilda` or `guake`). If your terminal app command line does not contain these words and reXply is not launching dmenu when your terminal is open, search for `guake` in the rexply.bash file and append your terminal binary name to the list (and open an issue in GitHub, please).
+
+### Customize
+
+Script settings can be modified by (in the order it takes precedence):
 
 - passing parameters to `reply` command; or
-- modifying the additional config file (`$HOME/rexply/rexply.cfg`); or
-- modifying the rexply file directly (`$HOME/rexply/rexply.bash`);
-
-We will avoid updating the additional config file but _take your backups before updating_, please.
+- modifying the user config file (`$HOME/.rexply/rexply.cfg`); or
+- modifying the config file (`rexply.cfg` in rexply.bash's directory); or
+- modifying the rexply.bash directly;
 
 ## To-do
 
@@ -256,7 +270,7 @@ We will avoid updating the additional config file but _take your backups before 
 
 ## More info regarding the dependencies
 
-- `dmenu` is the standard application used to output information and capture input in OSX due to it's more widespread presence - including availability via Homebrew. If you want more fancy visual, with screen-centered dialogs, ability to fill in all front-matter variables of a template in a single - floating window - form, set options `$yadfile` (file selection) and `$yadform` (front-matter form) to `1` (or run `rexply -y 1 -Y 1`) so you can use `yad` instead.
+- `dmenu` is the standard application used to output information and capture input in OSX due to it's more widespread presence - including availability via Homebrew.
 - `xclip` may be substituted with `xsel` (see `$copycmd` option) or `pbcopy` and `pbpaste` - useful in OSX, I just had no time to test yet, so it may need some polishing.
 - `xdotool` is used to handle the window focus (and apparently, it's not that easy to make it work on OSX due to `XTEST` not being active by default). You can get rid of this dependency by disabling `$focusit` option. A possible problem if you are using the script to paste data (with `xclip` or `xsel`) while another window is set as _'always-on-top'_: the data will sometimes end up being pasted to the window set as _'always-on-top'_ instead the desired window (depends on the application and other circumstances - not tested on OSX yet).
 
@@ -267,11 +281,11 @@ We will avoid updating the additional config file but _take your backups before 
 If you want to try automatic pasting, there are 2 ways to implement it:
 
 1. set `$pastedefault='eval cat $1'` and `$pasteterminal='eval cat $1'` (or just pass `-P 'eval cat $1'` parameter) - **note the single quotes** - and pipe reXply to whichever program you want to use to handle the data in sequence. Just as an example, at least theoretically, piping the output to `pbcopy` (e.g.: `rexply -P 'eval cat $1' | pbcopy`) the data will be copied to clipboard (as reXply does by default) and you can paste it manually. I could not test (pbcopy not available in my Linux distro and `xclip`/`xsel` handles input buffer a bit differently). Feel free to try this and other ways to parse the output :)
-2. there's another option: disable automatic pasting with `$pasteit='0'` (what is default for OSX) and also set it to keep the _tmpfile_ after processed (`$deltemp='0'` or `-d 0`), then use the processed data saved at _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own way.
+1. there's another option: disable automatic pasting with `$pasteit='0'` (what is default for OSX) and also set it to keep the _tmpfile_ after processed (`$deltemp='0'` or `-d 0`), then use the processed data saved at _tmpfile_ (by default, `$HOME/rexply/rexply-data/.tmp/tmp`) by your own way.
 
 ## Contributing
 
-When contributing (pull requests), please do not push your local rexply.cfg changes (`git update-index --skip-worktree rexply.cfg`).
+Feel free to start issues, send pull requests and donate.
 
 ## Donate
 
